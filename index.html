@@ -476,7 +476,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
   <footer>
     일정은 업로드한 「후쿠오카_여행일정_최종_v4」 기준이고, 항공·보험 정보는 e-티켓과 가입 내역을 옮기되 예약번호와 이름은 가려두었어요.<br>
-    현지 영업시간과 운행 정보는 방문 전에 각 장소의 Google Maps 링크에서 다시 확인해 주세요.
+    날씨는 일본 기상청(気象庁) 예보를 날짜별 방문 지역에 맞춰 가져옵니다. 현지 영업시간과 운행 정보는 방문 전에 각 장소의 Google Maps 링크에서 다시 확인해 주세요.
   </footer>
 </div>
 
@@ -487,7 +487,7 @@ const HOTEL = {lat:33.5878, lng:130.3945, q:"ホテルモントレ ラ・スー�
 
 const DAYS = [
  {
-  date:"2026-09-18", label:"9.18", dow:"금", area:"도착 · 텐진", color:"#C2405F",
+  date:"2026-09-18", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.18", dow:"금", area:"도착 · 텐진", color:"#C2405F",
   items:[
    {time:"14:25", name:"인천공항 제2터미널 출발", desc:"에어서울 RS727 · 비행 1시간 35분", type:"info"},
    {time:"16:00", name:"후쿠오카공항 국제선", ja:"福岡空港 国際線ターミナル", desc:"입국 심사 후 국내선 터미널로 무료 셔틀 이동, 지하철 공항선 탑승", lat:33.5930, lng:130.4350, mode:"start"},
@@ -510,7 +510,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-19", label:"9.19", dow:"토", area:"하카타 · 텐진 · 나카스", color:"#2F6FB5",
+  date:"2026-09-19", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.19", dow:"토", area:"하카타 · 텐진 · 나카스", color:"#2F6FB5",
   items:[
    {kind:"아침", time:"09:00", name:"우동 · 호텔 주변", ja:"うどん 天神", desc:"다이묘·텐진 쪽 우동집으로. 마키노우동, 우동타이라 같은 곳이 아침부터 열어요", lat:33.5883, lng:130.3955, mode:"start"},
    {time:"09:40", name:"호텔 출발", ja:"ホテルモントレ ラ・スール福岡", desc:"오늘은 후쿠오카 시내만 통째로", lat:HOTEL.lat, lng:HOTEL.lng, mode:"walk", how:"도보 5분"},
@@ -536,7 +536,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-20", label:"9.20", dow:"일", area:"고쿠라 · 모지코", color:"#1E8A6E",
+  date:"2026-09-20", pref:"400000", wxArea:"北九州", wxTemp:"八幡", wxName:"기타큐슈", label:"9.20", dow:"일", area:"고쿠라 · 모지코", color:"#1E8A6E",
   items:[
    {kind:"아침", time:"08:00", name:"아침은 편의점 또는 하카타역", desc:"오니기리 고리짱은 11시에 열어서 이날 아침에는 못 가요. 9.22 점심 후보로 옮겨두는 편이 나아요", type:"info",
     flag:"고리짱 텐진점은 11:00~20:00에 수요일 휴무이고, 쌀이 떨어지면 일찍 닫아요. 주말에는 더 일찍 연다는 안내도 있지만 09:15 신칸센과는 맞지 않습니다. 재료 소진 마감이 있는 집이라 9.22에 갈 거면 점심시간 전에 도착하는 게 좋아요."},
@@ -562,7 +562,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-21", label:"9.21", dow:"월", area:"유후인 · 사파리 · 지옥", color:"#C06A16",
+  date:"2026-09-21", pref:"440000", wxArea:"中部", wxTemp:"大分", wxName:"유후인·벳푸", label:"9.21", dow:"월", area:"유후인 · 사파리 · 지옥", color:"#C06A16",
   items:[
    {time:"06:30", name:"기상 · 준비", desc:"집결시간이 이르니 알람 필수", type:"info"},
    {kind:"아침", time:"07:00", name:"편의점 아침", desc:"호텔 근처 편의점에서 사서 버스에서", type:"info"},
@@ -583,7 +583,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-22", label:"9.22", dow:"화", area:"체크아웃 · 귀국", color:"#6A55C4",
+  date:"2026-09-22", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.22", dow:"화", area:"체크아웃 · 귀국", color:"#6A55C4",
   items:[
    {kind:"아침", time:"09:00", name:"편의점 아침", desc:"짐 정리하면서 간단히", type:"info"},
    {time:"11:00", name:"체크아웃 · 짐 보관", ja:"ホテルモントレ ラ・スール福岡", desc:"호텔에 짐 맡기고 가볍게 이동", lat:HOTEL.lat, lng:HOTEL.lng, mode:"start"},
@@ -1166,34 +1166,116 @@ window.addEventListener("scroll", () => {
 }, {passive:true});
 
 
-/* ============ 날씨 ============ */
-const WMO = c => {
-  if (c === 0) return ["맑음", "☀️"];
-  if (c <= 2) return ["대체로 맑음", "🌤"];
-  if (c === 3) return ["흐림", "☁️"];
-  if (c <= 48) return ["안개", "🌫"];
-  if (c <= 57) return ["이슬비", "🌦"];
-  if (c <= 67) return ["비", "🌧"];
-  if (c <= 77) return ["눈", "❄️"];
-  if (c <= 82) return ["소나기", "🌦"];
-  if (c <= 86) return ["눈", "❄️"];
-  return ["뇌우", "⛈"];
+/* ============ 날씨 · 일본 기상청(気象庁) ============ */
+// 코드 첫 자리: 1 맑음 / 2 흐림 / 3 비 / 4 눈
+const JMA_TELOP = {
+  "100":["맑음","☀️"], "101":["맑다가 구름","🌤"], "102":["맑다가 한때 비","🌦"], "104":["맑다가 한때 눈","🌨"],
+  "110":["맑음 뒤 흐림","🌤"], "111":["맑음 뒤 흐림","🌤"], "112":["맑음 뒤 비","🌦"], "113":["맑음 뒤 비","🌦"],
+  "114":["맑음 뒤 비","🌦"], "115":["맑음 뒤 눈","🌨"], "119":["맑음 뒤 비·천둥","⛈"],
+  "120":["맑다가 한때 비","🌦"], "122":["맑다가 한때 비","🌦"], "125":["맑음 뒤 천둥비","⛈"],
+  "130":["아침 안개 뒤 맑음","🌫"], "132":["맑다가 구름","🌤"], "140":["맑고 때때로 비·천둥","⛈"],
+  "200":["흐림","☁️"], "201":["구름 많음","⛅"], "202":["흐리고 한때 비","🌧"], "203":["흐리고 때때로 비","🌧"],
+  "204":["흐리고 한때 눈","🌨"], "205":["흐리고 때때로 눈","🌨"], "206":["흐리고 한때 비","🌧"],
+  "207":["흐리고 때때로 비","🌧"], "208":["흐리고 한때 비·천둥","⛈"], "209":["안개","🌫"],
+  "210":["흐림 뒤 맑음","⛅"], "211":["흐림 뒤 맑음","⛅"], "212":["흐림 뒤 비","🌧"], "213":["흐림 뒤 비","🌧"],
+  "214":["흐림 뒤 비","🌧"], "215":["흐림 뒤 눈","🌨"], "218":["흐림 뒤 눈","🌨"], "219":["흐림 뒤 비·천둥","⛈"],
+  "220":["흐리고 한때 비","🌧"], "222":["흐리고 때때로 비","🌧"], "224":["흐림 뒤 비","🌧"],
+  "228":["흐리고 때때로 눈","🌨"], "231":["안개 또는 안개비","🌫"], "240":["흐리고 때때로 비·천둥","⛈"],
+  "300":["비","🌧"], "301":["비 뒤 맑음","🌦"], "302":["비가 때때로 그침","🌧"], "303":["비 뒤 눈","🌨"],
+  "304":["비 또는 눈","🌨"], "306":["큰비","🌧"], "308":["비 동반 강풍","🌪"], "309":["비 뒤 눈","🌨"],
+  "311":["비 뒤 맑음","🌦"], "313":["비 뒤 흐림","🌧"], "314":["비 뒤 눈","🌨"], "316":["비 또는 눈 뒤 맑음","🌦"],
+  "320":["비 뒤 맑음","🌦"], "321":["비 뒤 흐림","🌧"], "323":["비 뒤 맑음","🌦"], "324":["비 뒤 맑음","🌦"],
+  "325":["비 뒤 맑음","🌦"], "326":["비 뒤 눈","🌨"], "328":["비, 곳에 따라 큰비","🌧"], "329":["비 또는 진눈깨비","🌨"],
+  "340":["눈 또는 비","🌨"], "350":["비·천둥","⛈"], "361":["눈 또는 비 뒤 맑음","🌦"], "371":["눈 또는 비 뒤 흐림","🌨"],
+  "400":["눈","❄️"], "401":["눈 뒤 맑음","❄️"], "402":["눈이 때때로 그침","❄️"], "403":["눈 또는 비","🌨"],
+  "406":["큰눈","❄️"], "411":["눈 뒤 맑음","❄️"], "413":["눈 뒤 흐림","❄️"], "414":["눈 뒤 비","🌨"],
+  "420":["눈 뒤 맑음","❄️"], "425":["큰눈","❄️"], "430":["눈","❄️"], "450":["눈·천둥","❄️"]
 };
+function telop(code){
+  if (JMA_TELOP[code]) return JMA_TELOP[code];
+  const head = String(code)[0];
+  return head === "1" ? ["맑음","☀️"]
+       : head === "2" ? ["흐림","☁️"]
+       : head === "3" ? ["비","🌧"]
+       : head === "4" ? ["눈","❄️"] : ["－","◌"];
+}
+
+const jmaCache = new Map();
+async function jmaFetch(pref){
+  if (jmaCache.has(pref)) return jmaCache.get(pref);
+  const r = await fetch(`https://www.jma.go.jp/bosai/forecast/data/forecast/${pref}.json`);
+  if (!r.ok) throw new Error("jma " + r.status);
+  const j = await r.json();
+  jmaCache.set(pref, j);
+  return j;
+}
+
+// 이름에 키워드가 든 구역을 찾고, 없으면 첫 번째
+const pickArea = (areas, key) =>
+  areas.find(a => a.area && a.area.name.includes(key)) || areas[0];
+
+function jmaPick(json, day){
+  const want = day.date;
+  const out = {};
+
+  // 주간예보(두 번째 블록)
+  const wk = json[1];
+  if (wk && wk.timeSeries){
+    const ws = wk.timeSeries[0];
+    const wi = ws.timeDefines.findIndex(t => t.slice(0, 10) === want);
+    if (wi >= 0){
+      const a = pickArea(ws.areas, day.wxArea);
+      out.code = a.weatherCodes[wi];
+      out.pop = a.pops ? a.pops[wi] : "";
+      out.rel = a.reliabilities ? a.reliabilities[wi] : "";
+    }
+    const ts = wk.timeSeries[1];
+    if (ts){
+      const ti = ts.timeDefines.findIndex(t => t.slice(0, 10) === want);
+      if (ti >= 0){
+        const a = pickArea(ts.areas, day.wxTemp);
+        out.tmax = a.tempsMax ? a.tempsMax[ti] : "";
+        out.tmin = a.tempsMin ? a.tempsMin[ti] : "";
+      }
+    }
+  }
+
+  // 단기예보(첫 블록)가 그 날짜를 덮으면 더 정확하므로 우선
+  const st = json[0];
+  if (st && st.timeSeries){
+    const ss = st.timeSeries[0];
+    const si = ss.timeDefines.findIndex(t => t.slice(0, 10) === want);
+    if (si >= 0){
+      const a = pickArea(ss.areas, day.wxArea);
+      out.code = a.weatherCodes[si];
+      out.rel = "";
+      const ps = st.timeSeries[1];
+      if (ps){
+        const pa = pickArea(ps.areas, day.wxArea);
+        const vals = ps.timeDefines
+          .map((t, k) => t.slice(0, 10) === want ? Number(pa.pops[k]) : null)
+          .filter(v => v !== null && !isNaN(v));
+        if (vals.length) out.pop = String(Math.max(...vals));
+      }
+    }
+  }
+  return out;
+}
 
 async function loadWeather(){
   const wx = document.getElementById("wx");
+  const day = DAYS[dayIdx];
   wx.innerHTML = `<span class="wx-t">◌</span><span class="wx-b">날씨 불러오는 중…</span>`;
   try{
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=33.59&longitude=130.40" +
-      "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
-      "&timezone=Asia%2FTokyo&forecast_days=14";
-    const r = await fetch(url);
-    const j = await r.json();
-    const idx = j.daily.time.indexOf(DAYS[dayIdx].date);
-    if (idx < 0) throw new Error("range");
-    const [txt, emo] = WMO(j.daily.weather_code[idx]);
+    const json = await jmaFetch(day.pref);
+    const f = jmaPick(json, day);
+    if (!f.code) throw new Error("no data");
+    const [txt, emo] = telop(f.code);
+    const t = (f.tmax && f.tmin) ? ` ${f.tmax}° / ${f.tmin}°` : "";
+    const pop = f.pop !== "" && f.pop != null ? ` · 비 ${f.pop}%` : "";
+    const rel = f.rel ? ` · 신뢰도 ${f.rel}` : "";
     wx.innerHTML = `<span class="wx-t">${emo}</span>
-      <span class="wx-b"><b>${DAYS[dayIdx].label} ${txt}</b> ${Math.round(j.daily.temperature_2m_max[idx])}° / ${Math.round(j.daily.temperature_2m_min[idx])}° · 비 ${j.daily.precipitation_probability_max[idx]}%</span>
+      <span class="wx-b"><b>${day.wxName} ${txt}</b>${t}${pop}${rel}</span>
       <button class="retry" type="button" aria-label="날씨 새로고침">↻</button>`;
   }catch(e){
     wx.innerHTML = `<span class="wx-t">🌐</span>
@@ -1201,7 +1283,7 @@ async function loadWeather(){
       <button class="retry" type="button" aria-label="다시 시도">↻</button>`;
   }
   const btn = wx.querySelector(".retry");
-  if (btn) btn.addEventListener("click", loadWeather);
+  if (btn) btn.addEventListener("click", () => { jmaCache.clear(); loadWeather(); });
 }
 
 /* ============ 시작 ============ */
