@@ -264,9 +264,10 @@ body.dragging-lock .tl li{touch-action:none}
 .chk.done .txt b{color:var(--muted);text-decoration:line-through}
 .who{display:flex;gap:5px;flex:0 0 auto}
 .who button{border:1.5px solid var(--line);background:#fff;border-radius:999px;
-  padding:6px 11px;font-size:11.5px;color:var(--muted);font-weight:600;min-width:48px}
-.who button[aria-pressed="true"]{background:#1E8A6E;border-color:#1E8A6E;color:#fff}
-.who button.rm{border-style:dashed;color:#C2405F;min-width:34px;padding:6px 8px;font-weight:400}
+  width:36px;height:36px;padding:0;font-size:17px;line-height:1;opacity:.35;filter:grayscale(1)}
+.who button[aria-pressed="true"]{background:#F3FAF7;border-color:#1E8A6E;opacity:1;filter:none}
+.who button.rm{border-style:dashed;color:#C2405F;width:32px;height:36px;font-size:13px;
+  opacity:1;filter:none}
 .prog{font-size:12.5px;color:var(--muted);margin:0 0 12px}
 .progrow{display:flex;align-items:center;gap:8px;margin:0 0 10px}
 .progrow button{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:999px;
@@ -404,7 +405,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
     <div class="prep-block">
       <h3>챙길 것</h3>
-      <p class="sub">우영과 예슬 각각 체크할 수 있어요. 항목을 직접 추가해도 됩니다.</p>
+      <p class="sub">🐯 우영 · 🐰 예슬 각각 체크할 수 있어요. 항목을 직접 추가해도 됩니다.</p>
       <div class="progrow"><span class="prog" id="prog" style="margin:0"></span>
         <button type="button" id="checkReset">모두 해제</button></div>
       <div class="addrow">
@@ -1314,7 +1315,7 @@ const WARNS = [
    p:"병원에 가면 진단서와 영수증 원본을 꼭 챙기세요. 물건이 도난·파손됐을 때는 현지 경찰 신고서가 있어야 하고, 단순 분실은 보상 대상이 아니에요. 휴대품은 물품당 20만원 한도에 자기부담금 1만원입니다."}
 ];
 
-const PEOPLE = [{k:"woo", n:"우영"}, {k:"ye", n:"예슬"}];
+const PEOPLE = [{k:"woo", n:"우영", e:"🐯"}, {k:"ye", n:"예슬", e:"🐰"}];
 const GROUPS = ["서류", "돈·통신", "짐", "기타"];
 
 (function renderPrep(){
@@ -1347,7 +1348,7 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
     const items = all();
     const txt = PEOPLE.map(p => {
       const n = items.filter(c => isOn(p.k, c.id)).length;
-      return `${p.n} ${n}/${items.length}`;
+      return `${p.e} ${n}/${items.length}`;
     }).join("  ·  ");
     prog.textContent = txt + (canSave ? "" : "  ·  이 화면에서는 저장되지 않아요");
   }
@@ -1369,7 +1370,7 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
         if (PEOPLE.every(p => isOn(p.k, c.id))) row.classList.add("done");
         row.innerHTML = `<span class="txt"><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ""}</span>
           <span class="who">${PEOPLE.map(p =>
-            `<button type="button" data-p="${p.k}" aria-pressed="${isOn(p.k, c.id)}">${p.n}</button>`).join("")}${
+            `<button type="button" data-p="${p.k}" title="${p.n}" aria-label="${p.n}" aria-pressed="${isOn(p.k, c.id)}">${p.e}</button>`).join("")}${
             c.id[0] === "c" ? `<button type="button" class="rm" data-p="rm" aria-label="삭제">✕</button>` : ""}</span>`;
         row.querySelector(".who").addEventListener("click", e => {
           const b = e.target.closest("button");
