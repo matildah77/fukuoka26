@@ -255,14 +255,30 @@ body.dragging-lock .tl li{touch-action:none}
 .prep-block h3{font-size:15px;font-weight:700;margin:0 0 3px}
 .prep-block .sub{margin:0 0 12px;font-size:12.5px;color:var(--muted)}
 .checks{display:grid;gap:8px;grid-template-columns:1fr}
-.chk{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;
-  border:1px solid var(--line);background:#fff;border-radius:11px;padding:11px 13px;font-size:14px;line-height:1.5}
-.chk .box{flex:0 0 auto;width:19px;height:19px;border:1.5px solid var(--line);border-radius:6px;margin-top:1px;
-  display:grid;place-items:center;font-size:12px;color:transparent}
-.chk[aria-pressed="true"]{border-color:#1E8A6E;background:#F3FAF7}
-.chk[aria-pressed="true"] .box{background:#1E8A6E;border-color:#1E8A6E;color:#fff}
+.chk{display:flex;gap:10px;align-items:center;width:100%;
+  border:1px solid var(--line);background:#fff;border-radius:11px;padding:11px 13px;font-size:14px;line-height:1.45}
+.chk .txt{flex:1;min-width:0}
+.chk .txt b{font-weight:600}
 .chk small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:2px}
+.chk.done{background:#F3FAF7;border-color:#CFE8DE}
+.chk.done .txt b{color:var(--muted);text-decoration:line-through}
+.who{display:flex;gap:5px;flex:0 0 auto}
+.who button{border:1.5px solid var(--line);background:#fff;border-radius:999px;
+  padding:6px 11px;font-size:11.5px;color:var(--muted);font-weight:600;min-width:48px}
+.who button[aria-pressed="true"]{background:#1E8A6E;border-color:#1E8A6E;color:#fff}
+.who button.rm{border-style:dashed;color:#C2405F;min-width:34px;padding:6px 8px;font-weight:400}
 .prog{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+.progrow{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.progrow button{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:999px;
+  padding:5px 12px;font-size:12.5px;color:var(--ink-2)}
+.addrow{display:flex;gap:6px;margin:0 0 14px}
+.addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;
+  padding:9px 11px;font-size:13.5px;font-family:inherit}
+.addrow select{border:1px solid var(--line);border-radius:10px;padding:9px 8px;
+  font-size:13px;font-family:inherit;background:#fff}
+.addrow button{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:10px;
+  padding:9px 15px;font-size:13px;font-weight:600}
+.grouphead{grid-column:1/-1;margin:12px 0 0;font-weight:700;color:var(--ink);font-size:13px}
 
 .warns{display:grid;gap:8px;grid-template-columns:1fr;margin:0 0 30px}
 
@@ -388,8 +404,14 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
     <div class="prep-block">
       <h3>챙길 것</h3>
-      <p class="sub">눌러서 체크해두면 다음에 열어도 그대로 남아 있어요.</p>
-      <div class="warnall"><span class="prog" id="prog" style="margin:0"></span><button type="button" id="checkReset" style="margin-left:auto">모두 해제</button></div>
+      <p class="sub">우영과 예슬 각각 체크할 수 있어요. 항목을 직접 추가해도 됩니다.</p>
+      <div class="progrow"><span class="prog" id="prog" style="margin:0"></span>
+        <button type="button" id="checkReset">모두 해제</button></div>
+      <div class="addrow">
+        <input id="newCheck" placeholder="추가할 준비물">
+        <select id="newGroup"></select>
+        <button type="button" id="addCheck">추가</button>
+      </div>
       <div class="checks" id="checks"></div>
     </div>
 
@@ -1292,60 +1314,111 @@ const WARNS = [
    p:"병원에 가면 진단서와 영수증 원본을 꼭 챙기세요. 물건이 도난·파손됐을 때는 현지 경찰 신고서가 있어야 하고, 단순 분실은 보상 대상이 아니에요. 휴대품은 물품당 20만원 한도에 자기부담금 1만원입니다."}
 ];
 
+const PEOPLE = [{k:"woo", n:"우영"}, {k:"ye", n:"예슬"}];
+const GROUPS = ["서류", "돈·통신", "짐", "기타"];
+
 (function renderPrep(){
   const wrap = document.getElementById("checks");
   const prog = document.getElementById("prog");
-  const KEY = "fuk26.checks";
+  const KEY_C = "fuk26.checked";
+  const KEY_I = "fuk26.extraItems";
 
-  // 저장된 체크 상태 불러오기 (브라우저가 막으면 조용히 건너뜀)
-  let saved = [];
   let canSave = true;
-  try{
-    saved = JSON.parse(localStorage.getItem(KEY) || "[]");
-    if (!Array.isArray(saved)) saved = [];
-  }catch(e){ canSave = false; saved = []; }
-
-  const store = () => {
+  const read = (k, fb) => {
+    try{ const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; }
+    catch(e){ canSave = false; return fb; }
+  };
+  const write = (k, v) => {
     if (!canSave) return;
-    try{ localStorage.setItem(KEY, JSON.stringify(saved)); }
-    catch(e){ canSave = false; }
+    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ canSave = false; }
   };
 
-  const update = () => prog.textContent = `${saved.length} / ${CHECKS.length} 준비 완료`
-    + (canSave ? "" : " · 이 화면에서는 체크가 저장되지 않아요");
+  let checked = read(KEY_C, {woo:[], ye:[]});
+  if (!checked || typeof checked !== "object") checked = {};
+  PEOPLE.forEach(p => { if (!Array.isArray(checked[p.k])) checked[p.k] = []; });
+  let extra = read(KEY_I, []);
+  if (!Array.isArray(extra)) extra = [];
 
-  let lastG = "";
-  CHECKS.forEach((c, idx) => {
-    if (c.g !== lastG){
-      lastG = c.g;
+  const base = CHECKS.map((c, i) => ({...c, id:"b" + i}));
+  const all = () => [...base, ...extra];
+  const isOn = (pk, id) => checked[pk].includes(id);
+
+  function updateProg(){
+    const items = all();
+    const txt = PEOPLE.map(p => {
+      const n = items.filter(c => isOn(p.k, c.id)).length;
+      return `${p.n} ${n}/${items.length}`;
+    }).join("  ·  ");
+    prog.textContent = txt + (canSave ? "" : "  ·  이 화면에서는 저장되지 않아요");
+  }
+
+  function draw(){
+    wrap.innerHTML = "";
+    const items = all();
+    GROUPS.forEach(g => {
+      const rows = items.filter(c => (c.g || "기타") === g);
+      if (!rows.length) return;
       const h = document.createElement("p");
-      h.className = "prog";
-      h.style.cssText = "grid-column:1/-1;margin:10px 0 0;font-weight:700;color:var(--ink)";
-      h.textContent = c.g;
+      h.className = "grouphead";
+      h.textContent = g;
       wrap.appendChild(h);
-    }
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "chk";
-    b.setAttribute("aria-pressed", String(saved.includes(idx)));
-    b.innerHTML = `<span class="box">✓</span><span><b style="font-weight:600">${c.t}</b><small>${c.s}</small></span>`;
-    b.addEventListener("click", () => {
-      const on = b.getAttribute("aria-pressed") === "true";
-      b.setAttribute("aria-pressed", String(!on));
-      saved = on ? saved.filter(x => x !== idx) : [...saved, idx];
-      store();
-      update();
+
+      rows.forEach(c => {
+        const row = document.createElement("div");
+        row.className = "chk";
+        if (PEOPLE.every(p => isOn(p.k, c.id))) row.classList.add("done");
+        row.innerHTML = `<span class="txt"><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ""}</span>
+          <span class="who">${PEOPLE.map(p =>
+            `<button type="button" data-p="${p.k}" aria-pressed="${isOn(p.k, c.id)}">${p.n}</button>`).join("")}${
+            c.id[0] === "c" ? `<button type="button" class="rm" data-p="rm" aria-label="삭제">✕</button>` : ""}</span>`;
+        row.querySelector(".who").addEventListener("click", e => {
+          const b = e.target.closest("button");
+          if (!b) return;
+          if (b.dataset.p === "rm"){
+            if (!confirm(`"${c.t}" 항목을 지울까요?`)) return;
+            extra = extra.filter(x => x.id !== c.id);
+            PEOPLE.forEach(p => { checked[p.k] = checked[p.k].filter(x => x !== c.id); });
+            write(KEY_I, extra); write(KEY_C, checked);
+          } else {
+            const pk = b.dataset.p;
+            checked[pk] = isOn(pk, c.id) ? checked[pk].filter(x => x !== c.id) : [...checked[pk], c.id];
+            write(KEY_C, checked);
+          }
+          draw();
+        });
+        wrap.appendChild(row);
+      });
     });
-    wrap.appendChild(b);
+    updateProg();
+  }
+
+  const sel = document.getElementById("newGroup");
+  GROUPS.forEach(g => {
+    const o = document.createElement("option");
+    o.value = g; o.textContent = g;
+    sel.appendChild(o);
   });
-  update();
+  sel.value = "짐";
+  const input = document.getElementById("newCheck");
+  const add = () => {
+    const t = input.value.trim();
+    if (!t) return;
+    extra.push({id:"c" + Date.now(), t, s:"", g:sel.value});
+    write(KEY_I, extra);
+    input.value = "";
+    draw();
+  };
+  document.getElementById("addCheck").addEventListener("click", add);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
 
   document.getElementById("checkReset").addEventListener("click", () => {
-    saved = [];
-    store();
-    wrap.querySelectorAll(".chk").forEach(b => b.setAttribute("aria-pressed", "false"));
-    update();
+    if (!confirm("두 사람의 체크를 모두 지울까요? 추가한 항목은 남습니다.")) return;
+    PEOPLE.forEach(p => { checked[p.k] = []; });
+    write(KEY_C, checked);
+    draw();
   });
+
+  draw();
 
   const w = document.getElementById("warns");
   WARNS.forEach(x => {
