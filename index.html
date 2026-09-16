@@ -39,6 +39,9 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .hero h1{margin:0;font-size:27px;line-height:1.25;font-weight:800;letter-spacing:-.02em}
 .hero .sub{margin:8px 0 0;color:#C3D6E4;font-size:13.5px}
 .hero .sub b{color:#fff;font-weight:600}
+.syncbadge{display:inline-block;margin:14px 0 0 7px;padding:5px 11px;border-radius:999px;
+  font-size:11.5px;border:1px solid rgba(255,255,255,.22);color:#C3D6E4}
+.syncbadge.on{border-color:rgba(120,220,180,.45);color:#9FE7C8}
 .dday{display:inline-block;margin-top:14px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
   padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:600}
 
@@ -409,6 +412,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
     <h1>후쿠오카 여행 동선 지도</h1>
     <p class="sub">2026.09.18 (금) – 09.22 (화) · 4박 5일 · 2인<br>숙소 <b>호텔 몬토레 라 스루 후쿠오카</b></p>
     <div class="dday" id="dday">출발까지</div>
+    <span class="syncbadge" id="syncBadge">연결 중…</span>
   </div>
 </header>
 
@@ -651,6 +655,8 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
 <script>
 /* ============ 데이터 ============ */
 const HOTEL = {lat:33.5878, lng:130.3945, q:"ホテルモントレ ラ・スール福岡"};
@@ -798,6 +804,105 @@ function dayDirectionsUrl(day){
     + `&origin=${ll(p[0])}&destination=${ll(p[p.length - 1])}`
     + (mid ? `&waypoints=${encodeURIComponent(mid)}` : "")
     + "&travelmode=transit";
+}
+
+
+/* ============ 실시간 동기화 ============ */
+const SYNC_KEYS = ["fuk26.boardMemos", "fuk26.itemMemos", "fuk26.memos",
+                   "fuk26.checked", "fuk26.extraItems", "fuk26.extraCand",
+                   "fuk26.day.2026-09-18", "fuk26.day.2026-09-19", "fuk26.day.2026-09-20",
+                   "fuk26.day.2026-09-21", "fuk26.day.2026-09-22"];
+let db = null, syncing = false, applying = false;
+
+(function initSync(){
+  if (typeof firebase === "undefined") return;
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyC-Sva608zhm_ocs-vRgG5_kI6JVYPFUmI",
+      authDomain: "fukuoka26-7624c.firebaseapp.com",
+      databaseURL: "https://fukuoka26-7624c-default-rtdb.firebaseio.com",
+      projectId: "fukuoka26-7624c",
+      storageBucket: "fukuoka26-7624c.firebasestorage.app",
+      messagingSenderId: "483639432003",
+      appId: "1:483639432003:web:3bb7802249da7bf08215f6"
+    });
+    db = firebase.database();
+    syncing = true;
+  }catch(e){ return; }
+
+  // 로컬 저장을 가로채 서버에도 반영
+  const origSet = Storage.prototype.setItem;
+  Storage.prototype.setItem = function(k, v){
+    origSet.call(this, k, v);
+    if (!applying && syncing && SYNC_KEYS.includes(k)){
+      db.ref("state/" + k.replace(/\./g, "_")).set(v).catch(() => {});
+    }
+  };
+  const origDel = Storage.prototype.removeItem;
+  Storage.prototype.removeItem = function(k){
+    origDel.call(this, k);
+    if (!applying && syncing && SYNC_KEYS.includes(k)){
+      db.ref("state/" + k.replace(/\./g, "_")).remove().catch(() => {});
+    }
+  };
+
+  // 서버 변경을 화면에 반영
+  db.ref("state").on("value", snap => {
+    const v = snap.val() || {};
+    let touched = false;
+    applying = true;
+    SYNC_KEYS.forEach(k => {
+      const rk = k.replace(/\./g, "_");
+      const remote = v[rk];
+      const local = localStorage.getItem(k);
+      if (remote != null && remote !== local){
+        origSet.call(localStorage, k, remote);
+        touched = true;
+      } else if (remote == null && local != null && v.__init){
+        origDel.call(localStorage, k);
+        touched = true;
+      }
+    });
+    applying = false;
+    if (touched) applyRemote();
+    setSyncBadge(true);
+  }, () => setSyncBadge(false));
+
+  db.ref("state/__init").set(true).catch(() => {});
+})();
+
+function applyRemote(){
+  // 일정
+  try{
+    DAYS.forEach(d => {
+      const raw = localStorage.getItem("fuk26.day." + d.date);
+      if (raw){
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length) d.items = arr;
+      }
+    });
+  }catch(e){}
+  // 메모
+  try{ itemMemos = JSON.parse(localStorage.getItem("fuk26.itemMemos") || "{}") || {}; }catch(e){}
+  try{ boardMemos = JSON.parse(localStorage.getItem("fuk26.boardMemos") || "[]") || []; }catch(e){}
+  // 후보
+  try{
+    const ex = JSON.parse(localStorage.getItem("fuk26.extraCand") || "[]") || [];
+    window.CAND = window.CAND.filter(c => !c.own);
+    ex.forEach(c => { c.own = true; window.CAND.push(c); });
+  }catch(e){}
+
+  if (typeof refreshDay === "function") refreshDay();
+  if (typeof renderBoard === "function" && !document.getElementById("panel-memo").hidden) renderBoard();
+  if (typeof redrawPrep === "function") redrawPrep();
+  if (typeof redrawCand === "function") redrawCand();
+}
+
+function setSyncBadge(ok){
+  const el = document.getElementById("syncBadge");
+  if (!el) return;
+  el.textContent = ok ? "동기화 중" : "연결 안 됨";
+  el.className = "syncbadge" + (ok ? " on" : "");
 }
 
 /* ============ D-day ============ */
@@ -1645,6 +1750,10 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
   }
 
   function draw(){
+    checked = read(KEY_C, checked);
+    PEOPLE.forEach(p => { if (!Array.isArray(checked[p.k])) checked[p.k] = []; });
+    extra = read(KEY_I, extra) || [];
+    memos = read(KEY_M, memos) || {};
     wrap.innerHTML = "";
     const items = all();
     GROUPS.forEach(g => {
