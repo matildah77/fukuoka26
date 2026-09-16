@@ -136,8 +136,14 @@ body.dragging-lock .tl li{touch-action:none}
 .flag{margin:8px 0 0;padding:9px 11px;background:#FFF6E8;border:1px solid #F0DDBE;border-radius:9px;
   font-size:12.5px;color:#7A5A22;line-height:1.55}
 .flag::before{content:"확인 ";font-weight:700}
+.mchips{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 0}
+.mchip{border:1px solid var(--line);background:#fff;border-radius:999px;
+  padding:4px 10px;font-size:11.5px;color:var(--muted)}
+.mchip.warn{border-color:#F0DDBE;background:#FFFBF4;color:#7A5A22}
+.mchip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.mchip.warn.on{background:#7A5A22;border-color:#7A5A22;color:#fff}
 .hours{margin:6px 0 0;font-size:12.5px;color:var(--ink-2);font-weight:600}
-.hours::before{content:"영업 ";color:var(--muted);font-weight:400}
+.hours::before{content:"영업시간 ";color:var(--muted);font-weight:400}
 .tip{margin:8px 0 0;padding:9px 11px;background:#F3FAF7;border:1px solid #CFE8DE;border-radius:9px;
   font-size:12.5px;color:#1F5B4A;line-height:1.6}
 .tip::before{content:"꿀팁 ";font-weight:700}
@@ -163,6 +169,10 @@ body.dragging-lock .tl li{touch-action:none}
 .near li .nm:hover{color:var(--ink);border-color:var(--ink)}
 .near li.near-sel{background:#fff;border-radius:8px;padding:5px 7px;margin:-5px -7px}
 .near li .ng{display:inline-block;margin-top:3px;font-size:11.5px}
+.near li .nx{border:1px solid var(--line);background:#fff;border-radius:7px;color:#C2405F;
+  font-size:11px;padding:2px 7px;margin-left:7px}
+.naddbtn{width:100%;margin-top:9px;border:1px dashed var(--line);background:#fff;border-radius:9px;
+  padding:8px 0;font-size:12.5px;color:var(--ink-2)}
 .near li a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line)}
 .pin.near-pin{background:#fff;font-size:15px;line-height:1}
 .near li a:hover{color:var(--ink);border-color:var(--ink)}
@@ -756,17 +766,23 @@ function renderTimeline(){
       <p class="n">${it.name}${it.ja ? `<small>${it.ja}</small>` : ""}</p>
       ${it.desc ? `<p class="d">${it.desc}</p>` : ""}
       ${how}${how && link ? "<br>" : ""}${link}
-      ${it.hours ? `<p class="hours">${it.hours}</p>` : ""}
-      ${it.tip ? `<p class="tip">${it.tip}</p>` : ""}
-      ${it.flag ? `<p class="flag">${it.flag}</p>` : ""}
-      ${it.near ? `<div class="near"><div class="near-h">이 근처라면 · 이름을 누르면 지도에 표시돼요</div><ul>${
-        it.near.map(x => {
+      ${(it.hours || it.tip || it.flag) ? `<div class="mchips">
+        ${it.hours ? `<button type="button" class="mchip" data-t="hours">🕘 영업</button>` : ""}
+        ${it.tip ? `<button type="button" class="mchip" data-t="tip">💡 꿀팁</button>` : ""}
+        ${it.flag ? `<button type="button" class="mchip warn" data-t="flag">⚠ 확인</button>` : ""}
+      </div>
+      ${it.hours ? `<p class="hours mbox" data-m="hours" hidden>${it.hours}</p>` : ""}
+      ${it.tip ? `<p class="tip mbox" data-m="tip" hidden>${it.tip}</p>` : ""}
+      ${it.flag ? `<p class="flag mbox" data-m="flag" hidden>${it.flag}</p>` : ""}` : ""}
+      ${(it.near && it.near.length) || editMode ? `<div class="near"><div class="near-h">이 근처라면${editMode ? "" : " · 이름을 누르면 지도에 표시돼요"}</div><ul>${
+        (it.near || []).map((x, k) => {
           const ni = x.lat ? nearList.push(x) - 1 : -1;
           return `<li${ni >= 0 ? ` data-ni="${ni}"` : ""}>${
             ni >= 0 ? `<b class="nm">${x.n}</b>` : `<b>${x.n}</b>`
-          }<em>${x.t}</em><span>${x.w}</span><a class="ng" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.j)}" target="_blank" rel="noopener">구글맵</a></li>`;
+          }<em>${x.t}</em><span>${x.w}</span><a class="ng" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.j)}" target="_blank" rel="noopener">구글맵</a>${
+            editMode ? `<button type="button" class="nx" data-nk="${k}" aria-label="삭제">✕</button>` : ""}</li>`;
         }).join("")
-      }</ul></div>` : ""}
+      }</ul>${editMode ? `<button type="button" class="naddbtn">+ 근처 추천 추가</button>` : ""}</div>` : ""}
     </div>`;
 
     if (editMode){
@@ -792,6 +808,26 @@ function renderTimeline(){
       const box = li.querySelector(".item");
       box.addEventListener("click", e => {
         if (e.target.closest("a")) return;   // 구글맵 링크는 그대로 열기
+        const chip = e.target.closest(".mchip");
+        if (chip){
+          const t = chip.dataset.t;
+          const panel = box.querySelector(`.mbox[data-m="${t}"]`);
+          if (panel){
+            panel.hidden = !panel.hidden;
+            chip.classList.toggle("on", !panel.hidden);
+          }
+          return;
+        }
+        const nx = e.target.closest(".nx");
+        if (nx){
+          const k = Number(nx.dataset.nk);
+          if (confirm(`"${it.near[k].n}" 추천을 지울까요?`)){
+            it.near.splice(k, 1);
+            commit();
+          }
+          return;
+        }
+        if (e.target.closest(".naddbtn")){ openNearForm(idx); return; }
         const nli = e.target.closest("li[data-ni]");
         if (nli){ showNear(Number(nli.dataset.ni)); return; }
         pickPlace(pi, "list");
@@ -889,6 +925,8 @@ function openForm(i){
     <div class="fr one"><div><label>장소 이름</label><input id="f-name" value="${v("name")}" placeholder="야키니쿠 · 가게 이름"></div></div>
     <div class="fr one"><div><label>구글맵 검색어 (일본어 이름이면 정확해요)</label><input id="f-ja" value="${v("ja")}" placeholder="焼肉 ○○ 福岡"></div></div>
     <div class="fr one"><div><label>메모</label><textarea id="f-desc" placeholder="예약 여부, 주의할 점 등">${v("desc")}</textarea></div></div>
+    <div class="fr one"><div><label>영업시간</label><input id="f-hours" value="${v("hours")}" placeholder="11:00~20:00 · 수요일 휴무"></div></div>
+    <div class="fr one"><div><label>꿀팁</label><textarea id="f-tip" placeholder="줄 서는 시간, 주문 방법 등">${v("tip")}</textarea></div></div>
     <div class="fr">
       <div><label>이동수단</label><select id="f-mode">
         <option value="walk"${it.mode === "walk" || !it.mode ? " selected" : ""}>도보·도로</option>
@@ -946,7 +984,8 @@ function openForm(i){
   slot.querySelector("#f-save").addEventListener("click", () => {
     const g = id => slot.querySelector("#f-" + id).value.trim();
     const obj = {time:g("time"), name:g("name"), ja:g("ja"), desc:g("desc"),
-                 kind:g("kind"), mode:g("mode"), how:g("how")};
+                 kind:g("kind"), mode:g("mode"), how:g("how"),
+                 hours:g("hours"), tip:g("tip")};
     if (!obj.name){ alert("장소 이름을 적어주세요."); return; }
     if (!obj.time) obj.time = "—";
     const la = parseFloat(g("lat")), ln = parseFloat(g("lng"));
@@ -955,17 +994,83 @@ function openForm(i){
     if (!obj.ja) delete obj.ja;
     if (!obj.how) delete obj.how;
     if (!obj.desc) delete obj.desc;
+    if (!obj.hours) delete obj.hours;
+    if (!obj.tip) delete obj.tip;
     if (!obj.lat) obj.type = "info";
 
     if (isNew) DAYS[dayIdx].items.push(obj);
     else {
       const keep = DAYS[dayIdx].items[i];
-      ["hours", "tip", "flag", "near"].forEach(k => { if (keep[k]) obj[k] = keep[k]; });
+      ["flag", "near"].forEach(k => { if (keep[k]) obj[k] = keep[k]; });
       DAYS[dayIdx].items[i] = obj;
     }
     stopPicking();
     if (!saveDay()) alert("브라우저에 저장하지 못했어요. 이 화면에서는 저장이 막혀 있을 수 있어요.");
     refreshDay();
+  });
+}
+
+function openNearForm(itemIdx){
+  const slot = document.getElementById("formSlot");
+  if (!slot) return;
+  const it = DAYS[dayIdx].items[itemIdx];
+  slot.innerHTML = `<div class="eform">
+    <div class="fr one"><div><label>${it.name} 근처에 추가</label>
+      <input id="n-name" placeholder="가게 이름"></div></div>
+    <div class="fr">
+      <div><label>구분</label><input id="n-t" value="후보" placeholder="카페 · 디저트 · 후보"></div>
+      <div><label>한 줄 설명</label><input id="n-w" placeholder="왜 추천인지"></div>
+    </div>
+    <div class="fr one"><div><label>구글맵 링크 또는 좌표</label>
+      <input id="n-url" placeholder="https://www.google.com/maps/place/... 또는 33.58, 130.40"></div></div>
+    <div class="fr">
+      <div><button type="button" id="n-apply" class="subbtn">링크에서 가져오기</button></div>
+      <div><button type="button" id="n-pick" class="subbtn">지도에서 찍기</button></div>
+    </div>
+    <div class="pickhint" id="n-hint">좌표가 있으면 지도에 표시돼요. 없어도 구글맵 링크는 만들어집니다.</div>
+    <div class="fr">
+      <div><label>위도</label><input id="n-lat" placeholder="33.5897"></div>
+      <div><label>경도</label><input id="n-lng" placeholder="130.4207"></div>
+    </div>
+    <div class="fr one"><div><label>구글맵 검색어 (일본어면 정확해요)</label>
+      <input id="n-ja" placeholder="焼肉 ○○ 福岡"></div></div>
+    <div class="acts">
+      <button type="button" id="n-cancel">취소</button>
+      <button type="button" class="primary" id="n-save">추가</button>
+    </div>
+  </div>`;
+  slot.scrollIntoView({block:"nearest", behavior:"smooth"});
+
+  const q = id => slot.querySelector("#n-" + id);
+  q("apply").addEventListener("click", () => {
+    const got = parseMapInput(q("url").value.trim());
+    if (got.lat){
+      q("lat").value = got.lat; q("lng").value = got.lng;
+      if (got.name && !q("ja").value) q("ja").value = got.name;
+      if (got.name && !q("name").value) q("name").value = got.name;
+      q("hint").textContent = `위치를 가져왔어요 · ${got.lat}, ${got.lng}`;
+    } else {
+      q("hint").textContent = "이 링크에는 좌표가 없어요. 지도에서 찍기를 써주세요.";
+    }
+  });
+  q("pick").addEventListener("click", () => {
+    if (mapPanel.classList.contains("folded")) setMapOpen(true, true);
+    pickingCoord = "near";
+    q("pick").textContent = "지도를 탭하세요…";
+    map.getContainer().style.cursor = "crosshair";
+  });
+  q("cancel").addEventListener("click", () => { slot.innerHTML = ""; stopPicking(); });
+  q("save").addEventListener("click", () => {
+    const n = q("name").value.trim();
+    if (!n){ alert("가게 이름을 적어주세요."); return; }
+    const obj = {n, j: q("ja").value.trim() || n, t: q("t").value.trim() || "후보", w: q("w").value.trim()};
+    const la = parseFloat(q("lat").value), ln = parseFloat(q("lng").value);
+    if (!isNaN(la) && !isNaN(ln)){ obj.lat = la; obj.lng = ln; }
+    if (!it.near) it.near = [];
+    it.near.push(obj);
+    stopPicking();
+    slot.innerHTML = "";
+    commit();
   });
 }
 
@@ -1184,10 +1289,12 @@ function initMap(){
   map.on("click", e => {
     if (pickingCoord){
       const slot = document.getElementById("formSlot");
-      if (slot && slot.querySelector("#f-lat")){
-        slot.querySelector("#f-lat").value = e.latlng.lat.toFixed(5);
-        slot.querySelector("#f-lng").value = e.latlng.lng.toFixed(5);
-        slot.querySelector("#f-pick").textContent = "위치가 채워졌어요 · 다시 찍기";
+      const pre = pickingCoord === "near" ? "n" : "f";
+      if (slot && slot.querySelector("#" + pre + "-lat")){
+        slot.querySelector("#" + pre + "-lat").value = e.latlng.lat.toFixed(5);
+        slot.querySelector("#" + pre + "-lng").value = e.latlng.lng.toFixed(5);
+        const pb = slot.querySelector("#" + pre + "-pick");
+        if (pb) pb.textContent = "위치가 채워졌어요 · 다시 찍기";
       }
       stopPicking();
       return;
