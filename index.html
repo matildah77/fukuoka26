@@ -467,7 +467,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
   <section class="info" id="panel-memo" role="tabpanel" aria-labelledby="tab-memo" hidden>
     <h2>메모</h2>
-    <p class="lead">둘이 함께 쓰는 메모장이에요. 일정과 준비물에 남긴 메모도 아래에 모입니다.</p>
+    <p class="lead">둘이 함께 쓰는 메모장이에요.</p>
     <div class="eform" style="margin-bottom:22px">
       <div class="memoform" style="margin:0">
         <button type="button" class="mw on" data-w="woo">🐯</button>
@@ -477,9 +477,6 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
       </div>
     </div>
     <div id="boardList"></div>
-    <h2 style="margin-top:30px">일정과 준비물에 남긴 메모</h2>
-    <p class="lead">각 항목에서 남긴 메모를 한곳에 모았어요.</p>
-    <div id="linkedMemos"></div>
   </section>
 
 
@@ -2008,30 +2005,6 @@ function renderBoard(){
     }));
   }
 
-  // 일정·준비물에 달린 메모 모으기
-  const box = document.getElementById("linkedMemos");
-  const rows = [];
-  Object.entries(itemMemos).forEach(([k, arr]) => {
-    const [date, name] = k.split("::");
-    const day = DAYS.find(d => d.date === date);
-    rows.push({title:name, src:`일정 · ${day ? day.label : date}`, arr});
-  });
-  let prepM = {};
-  try{ prepM = JSON.parse(localStorage.getItem("fuk26.memos") || "{}") || {}; }catch(e){}
-  let extras = [];
-  try{ extras = JSON.parse(localStorage.getItem("fuk26.extraItems") || "[]") || []; }catch(e){}
-  Object.entries(prepM).forEach(([id, arr]) => {
-    const base = id[0] === "b" ? CHECKS[Number(id.slice(1))] : extras.find(x => x.id === id);
-    rows.push({title: base ? base.t : "준비물", src:"준비물", arr});
-  });
-
-  box.innerHTML = rows.length ? rows.map(r => `<div class="lgroup">
-      <p class="src">${r.src}</p><h4>${r.title}</h4>
-      ${r.arr.map(m => {
-        const who = PEOPLE.find(p => p.k === m.w);
-        return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t}</span>`;
-      }).join("")}
-    </div>`).join("") : `<p class="emptyline">일정이나 준비물에 남긴 메모가 아직 없어요.</p>`;
 }
 
 (function renderSos(){
