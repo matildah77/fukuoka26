@@ -76,9 +76,11 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
   width:24px;height:24px;padding:0;font-size:12px;line-height:1;color:var(--muted)}
 
 /* ---------- view switch ---------- */
-.viewtabs{display:flex;gap:6px;background:var(--surface);padding:4px;border-radius:12px;margin:16px 0 0}
-.viewtabs button{flex:1;border:0;background:none;padding:9px 0;border-radius:9px;font-size:13.5px;
-  font-weight:600;color:var(--muted)}
+.viewtabs{display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:12px;margin:16px 0 0}
+.viewtabs button{flex:1 1 0;min-width:0;border:0;background:none;padding:9px 2px;border-radius:9px;
+  font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em}
+@media (max-width:400px){ .viewtabs button{font-size:12px} }
 .viewtabs button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(15,27,38,.1)}
 
 .board{margin-top:18px;display:grid;gap:22px}
@@ -156,7 +158,8 @@ body.dragging-lock .tl li{touch-action:none}
 .bmemo .bd p{margin:0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .bmemo .bd time{display:block;font-size:11px;color:var(--muted);margin-top:4px}
 .bmemo .bx{border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer;padding:2px 0 0}
-.lgroup{margin:0 0 16px}
+.lgroup{margin:0 0 10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+.lgroup:hover{border-color:var(--ink)}
 .lgroup h4{margin:0 0 6px;font-size:13px;font-weight:700}
 .lgroup .src{font-size:11.5px;color:var(--muted);margin:0 0 5px}
 .sosgrid{display:grid;gap:9px;grid-template-columns:1fr 1fr}
@@ -262,7 +265,7 @@ body.dragging-lock .tl li{touch-action:none}
 
 /* ---------- info cards ---------- */
 .info{margin-top:44px}
-#panel-cand,#panel-prep,#panel-memo,#panel-sos{margin-top:16px}
+#panel-cand,#panel-prep,#panel-memo{margin-top:16px}
 .info h2{font-size:18px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
 .info .lead{margin:0 0 16px;color:var(--muted);font-size:13px}
 .cards{display:grid;gap:12px;grid-template-columns:1fr;margin:0 0 32px}
@@ -419,11 +422,10 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 <div class="wrap">
 
   <div class="viewtabs" role="tablist" aria-label="보기 전환">
-    <button id="tab-trip" data-v="trip" role="tab" aria-selected="true" aria-controls="panel-list">일정과 지도</button>
-    <button id="tab-cand" data-v="cand" role="tab" aria-selected="false" aria-controls="panel-cand">후보 리스트</button>
+    <button id="tab-trip" data-v="trip" role="tab" aria-selected="true" aria-controls="panel-list">일정</button>
+    <button id="tab-cand" data-v="cand" role="tab" aria-selected="false" aria-controls="panel-cand">후보</button>
     <button id="tab-memo" data-v="memo" role="tab" aria-selected="false" aria-controls="panel-memo">메모</button>
     <button id="tab-prep" data-v="prep" role="tab" aria-selected="false" aria-controls="panel-prep">준비물</button>
-    <button id="tab-sos" data-v="sos" role="tab" aria-selected="false" aria-controls="panel-sos">긴급</button>
   </div>
   <nav class="daybar" aria-label="날짜 선택">
     <div class="days" id="days" role="tablist"></div>
@@ -471,7 +473,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
   <section class="info" id="panel-memo" role="tabpanel" aria-labelledby="tab-memo" hidden>
     <h2>메모</h2>
-    <p class="lead">둘이 함께 쓰는 메모장이에요.</p>
+    <p class="lead">둘이 함께 쓰는 메모장이에요. 아래에는 일정에 남긴 메모가 모입니다.</p>
     <div class="eform" style="margin-bottom:22px">
       <div class="memoform" style="margin:0">
         <button type="button" class="mw on" data-w="woo">🐯</button>
@@ -481,40 +483,11 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
       </div>
     </div>
     <div id="boardList"></div>
+    <h2 style="margin-top:30px">일정에 남긴 메모</h2>
+    <p class="lead">각 일정 항목에서 남긴 메모를 한곳에 모았어요. 누르면 그 날짜로 이동합니다.</p>
+    <div id="linkedMemos"></div>
   </section>
 
-
-  <section class="info" id="panel-sos" role="tabpanel" aria-labelledby="tab-sos" hidden>
-    <h2>긴급 연락처</h2>
-    <p class="lead">번호를 누르면 바로 전화가 걸려요. 일본 현지에서 거는 기준입니다.</p>
-
-    <div class="sosgrid">
-      <a class="sos urgent" href="tel:110"><b>110</b><span>경찰 · 사건, 사고, 도난</span></a>
-      <a class="sos urgent" href="tel:119"><b>119</b><span>소방 · 구급차, 화재</span></a>
-      <a class="sos" href="tel:118"><b>118</b><span>해상 사고 · 해상보안청</span></a>
-      <a class="sos" href="tel:+815038162787"><b>050-3816-2787</b><span>일본 방문객 핫라인 · 24시간 한국어</span></a>
-    </div>
-
-    <h2 style="margin-top:28px">주후쿠오카 대한민국 총영사관</h2>
-    <p class="lead">규슈 지역을 관할해요. 오이타현(유후인·벳푸)도 여기입니다.</p>
-    <div class="cards" style="margin-bottom:24px">
-      <div class="card"><div class="body" style="border:0;padding:15px 16px;margin:0">
-        <dl class="kv">
-          <dt>주소</dt><dd>福岡市中央区地行浜1-1-3 (〒810-0065)<br>후쿠오카시 주오구 지교하마 1-1-3</dd>
-          <dt>대표전화</dt><dd><a href="tel:+81927710461">092-771-0461~2</a> (평일 근무시간)</dd>
-          <dt>긴급전화</dt><dd><a href="tel:+818085882806">080-8588-2806</a> (야간·휴일)</dd>
-          <dt>영사콜센터</dt><dd><a href="tel:+82232100404">+82-2-3210-0404</a> (24시간·유료)</dd>
-          <dt>위치</dt><dd>야후오쿠돔 근처 · 호텔에서 지하철·택시로 15분쯤</dd>
-        </dl>
-        <a class="gmap" target="_blank" rel="noopener"
-           href="https://www.google.com/maps/search/?api=1&query=%E9%A7%90%E7%A6%8F%E5%B2%A1%E5%A4%A7%E9%9F%93%E6%B0%91%E5%9B%BD%E7%B7%8F%E9%A0%98%E4%BA%8B%E9%A4%A8">Google Maps에서 열기</a>
-      </div></div>
-    </div>
-
-    <h2>상황별 대처</h2>
-    <p class="lead">제목을 누르면 펼쳐져요.</p>
-    <div class="warns" id="sosSteps"></div>
-  </section>
 
   <section class="info" id="panel-prep" role="tabpanel" aria-labelledby="tab-prep" hidden>
 
@@ -645,6 +618,39 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
       <div class="warnall"><button type="button" id="warnToggle">전체 펼치기</button></div>
       <div class="warns" id="warns"></div>
     </div>
+    <div class="prep-block" style="margin-top:34px">
+      <h3>긴급 연락처</h3>
+      <p class="sub">번호를 누르면 바로 전화가 걸려요. 일본 현지에서 거는 기준입니다.</p>
+
+    <div class="sosgrid">
+      <a class="sos urgent" href="tel:110"><b>110</b><span>경찰 · 사건, 사고, 도난</span></a>
+      <a class="sos urgent" href="tel:119"><b>119</b><span>소방 · 구급차, 화재</span></a>
+      <a class="sos" href="tel:118"><b>118</b><span>해상 사고 · 해상보안청</span></a>
+      <a class="sos" href="tel:+815038162787"><b>050-3816-2787</b><span>일본 방문객 핫라인 · 24시간 한국어</span></a>
+    </div>
+
+      <h3 style="margin-top:24px">주후쿠오카 대한민국 총영사관</h3>
+      <p class="sub">규슈 지역을 관할해요. 오이타현(유후인·벳푸)도 여기입니다.</p>
+    <div class="cards" style="margin-bottom:24px">
+      <div class="card"><div class="body" style="border:0;padding:15px 16px;margin:0">
+        <dl class="kv">
+          <dt>주소</dt><dd>福岡市中央区地行浜1-1-3 (〒810-0065)<br>후쿠오카시 주오구 지교하마 1-1-3</dd>
+          <dt>대표전화</dt><dd><a href="tel:+81927710461">092-771-0461~2</a> (평일 근무시간)</dd>
+          <dt>긴급전화</dt><dd><a href="tel:+818085882806">080-8588-2806</a> (야간·휴일)</dd>
+          <dt>영사콜센터</dt><dd><a href="tel:+82232100404">+82-2-3210-0404</a> (24시간·유료)</dd>
+          <dt>위치</dt><dd>야후오쿠돔 근처 · 호텔에서 지하철·택시로 15분쯤</dd>
+        </dl>
+        <a class="gmap" target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/?api=1&query=%E9%A7%90%E7%A6%8F%E5%B2%A1%E5%A4%A7%E9%9F%93%E6%B0%91%E5%9B%BD%E7%B7%8F%E9%A0%98%E4%BA%8B%E9%A4%A8">Google Maps에서 열기</a>
+      </div></div>
+    </div>
+
+      <h3>상황별 대처</h3>
+      <p class="sub">제목을 누르면 펼쳐져요.</p>
+      <div class="warns" id="sosSteps"></div>
+    </div>
+
+
 
   </section>
 
@@ -2072,6 +2078,31 @@ function renderBoard(){
     }));
   }
 
+  const box = document.getElementById("linkedMemos");
+  const rows = Object.entries(itemMemos)
+    .filter(([, arr]) => arr && arr.length)
+    .map(([k, arr]) => {
+      const [date, name] = k.split("::");
+      const di = DAYS.findIndex(d => d.date === date);
+      return {title:name, label: di >= 0 ? DAYS[di].label : date, di, arr};
+    });
+
+  box.innerHTML = rows.length ? rows.map(r => `<div class="lgroup" data-di="${r.di}">
+      <p class="src">${r.label}</p><h4>${r.title}</h4>
+      ${r.arr.map(m => {
+        const who = PEOPLE.find(p => p.k === m.w);
+        return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t.replace(/</g, "&lt;")}</span>`;
+      }).join("")}
+    </div>`).join("") : `<p class="emptyline">일정에 남긴 메모가 아직 없어요.</p>`;
+
+  box.querySelectorAll(".lgroup").forEach(g => g.addEventListener("click", () => {
+    const di = Number(g.dataset.di);
+    if (di < 0) return;
+    setView("trip");
+    selectDay(di);
+    window.scrollTo({top:0, behavior:"smooth"});
+  }));
+
 }
 
 (function renderSos(){
@@ -2110,8 +2141,6 @@ const tabTrip = document.getElementById("tab-trip");
 const tabPrep = document.getElementById("tab-prep");
 const tabMemo = document.getElementById("tab-memo");
 const panelMemo = document.getElementById("panel-memo");
-const tabSos = document.getElementById("tab-sos");
-const panelSos = document.getElementById("panel-sos");
 const tabCand = document.getElementById("tab-cand");
 const panelList = document.getElementById("panel-list");
 const panelMap = document.getElementById("panel-map");
@@ -2133,7 +2162,6 @@ function setView(v){
   tabPrep.setAttribute("aria-selected", String(v === "prep"));
   tabCand.setAttribute("aria-selected", String(v === "cand"));
   tabMemo.setAttribute("aria-selected", String(v === "memo"));
-  tabSos.setAttribute("aria-selected", String(v === "sos"));
 
   daybar.hidden = !trip;
   wxBox.hidden = !trip;
@@ -2148,7 +2176,6 @@ tabTrip.addEventListener("click", () => setView("trip"));
 tabPrep.addEventListener("click", () => { setView("prep"); window.scrollTo({top:0, behavior:"smooth"}); });
 tabCand.addEventListener("click", () => { setView("cand"); window.scrollTo({top:0, behavior:"smooth"}); });
 tabMemo.addEventListener("click", () => { setView("memo"); window.scrollTo({top:0, behavior:"smooth"}); });
-tabSos.addEventListener("click", () => { setView("sos"); window.scrollTo({top:0, behavior:"smooth"}); });
 const mapPanel = document.getElementById("panel-map");
 const mapToggle = document.getElementById("mapToggle");
 const MKEY = "fuk26.mapOpen";
