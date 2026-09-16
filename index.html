@@ -136,8 +136,8 @@ body.dragging-lock .tl li{touch-action:none}
 .dot.info{background:#fff;border:2px solid var(--line);color:var(--muted)}
 .item{padding:3px 0 18px}
 .item .t{font-size:12.5px;color:var(--dc);font-weight:700;letter-spacing:.01em}
-.kind{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:999px;font-size:10.5px;
-  font-weight:700;background:var(--dc);color:#fff;vertical-align:1px}
+.kind{display:inline-block;margin-left:7px;padding:2px 9px;border-radius:999px;font-size:11px;
+  font-weight:700;background:var(--dc);color:#fff;vertical-align:1px;letter-spacing:.02em}
 .flag{margin:8px 0 0;padding:9px 11px;background:#FFF6E8;border:1px solid #F0DDBE;border-radius:9px;
   font-size:12.5px;color:#7A5A22;line-height:1.55}
 .flag::before{content:"확인 ";font-weight:700}
@@ -520,7 +520,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
     <div class="prep-block">
       <h3>챙길 것</h3>
-      <p class="sub">🐯 우영 · 🐰 예슬 각각 체크할 수 있어요. 항목을 직접 추가해도 됩니다.</p>
+      <p class="sub">🐯 우영 · 🐰 예슬 각각 체크할 수 있어요. 항목을 직접 추가해도 됩니다. 메모는 메모 탭에서요.</p>
       <div class="progrow"><span class="prog" id="prog" style="margin:0"></span>
         <button type="button" id="checkReset">모두 해제</button></div>
       <div class="addrow">
@@ -1155,7 +1155,7 @@ function openForm(i){
     <div class="fr">
       <div><label>시간</label><input id="f-time" value="${v("time")}" placeholder="19:00"></div>
       <div><label>구분</label><select id="f-kind">
-        ${["", "아침", "점심", "저녁", "간식"].map(k =>
+        ${["", "아침", "점심", "저녁", "간식", "카페"].map(k =>
           `<option value="${k}"${it.kind === k ? " selected" : ""}>${k || "없음"}</option>`).join("")}
       </select></div>
     </div>
@@ -1768,57 +1768,14 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
         const row = document.createElement("div");
         row.className = "chk";
         if (PEOPLE.every(p => isOn(p.k, c.id))) row.classList.add("done");
-        const ms = memos[c.id] || [];
-        row.innerHTML = `<span class="txt"><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ""}
-            ${ms.length ? `<span class="memos">${ms.map((m, mi) => {
-              const who = PEOPLE.find(p => p.k === m.w);
-              return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t}<button type="button" class="mdel" data-mi="${mi}" aria-label="메모 삭제">✕</button></span>`;
-            }).join("")}</span>` : ""}
-            <span class="memoslot"></span></span>
+        row.innerHTML = `<span class="txt"><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ""}</span>
           <span class="who">${PEOPLE.map(p =>
-            `<button type="button" data-p="${p.k}" title="${p.n}" aria-label="${p.n}" aria-pressed="${isOn(p.k, c.id)}">${p.e}</button>`).join("")}
-            <button type="button" class="mo" data-p="memo" aria-label="메모">💬</button>${
+            `<button type="button" data-p="${p.k}" title="${p.n}" aria-label="${p.n}" aria-pressed="${isOn(p.k, c.id)}">${p.e}</button>`).join("")}${
             c.id[0] === "c" ? `<button type="button" class="rm" data-p="rm" aria-label="삭제">✕</button>` : ""}</span>`;
 
-        row.querySelector(".txt").addEventListener("click", e => {
-          const b = e.target.closest(".mdel");
-          if (!b) return;
-          const list = memos[c.id] || [];
-          list.splice(Number(b.dataset.mi), 1);
-          if (!list.length) delete memos[c.id]; else memos[c.id] = list;
-          write(KEY_M, memos);
-          draw();
-        });
         row.querySelector(".who").addEventListener("click", e => {
           const b = e.target.closest("button");
           if (!b) return;
-          if (b.dataset.p === "memo"){
-            const slot = row.querySelector(".memoslot");
-            if (slot.innerHTML){ slot.innerHTML = ""; return; }
-            slot.innerHTML = `<span class="memoform">
-              ${PEOPLE.map((p, k) => `<button type="button" class="mw${k === 0 ? " on" : ""}" data-w="${p.k}">${p.e}</button>`).join("")}
-              <input class="mi" placeholder="한두 줄 메모">
-              <button type="button" class="ms">저장</button></span>`;
-            let who = PEOPLE[0].k;
-            slot.querySelectorAll(".mw").forEach(bt => bt.addEventListener("click", ev => {
-              ev.stopPropagation();
-              who = bt.dataset.w;
-              slot.querySelectorAll(".mw").forEach(x => x.classList.toggle("on", x === bt));
-            }));
-            const inp = slot.querySelector(".mi");
-            const save = () => {
-              const t = inp.value.trim();
-              if (!t) return;
-              memos[c.id] = [...(memos[c.id] || []), {w:who, t}];
-              write(KEY_M, memos);
-              draw();
-            };
-            slot.querySelector(".ms").addEventListener("click", ev => { ev.stopPropagation(); save(); });
-            inp.addEventListener("keydown", ev => { ev.stopPropagation(); if (ev.key === "Enter") save(); });
-            inp.addEventListener("click", ev => ev.stopPropagation());
-            inp.focus();
-            return;
-          }
           if (b.dataset.p === "rm"){
             if (!confirm(`"${c.t}" 항목을 지울까요?`)) return;
             extra = extra.filter(x => x.id !== c.id);
@@ -1857,7 +1814,7 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
   input.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
 
   document.getElementById("checkReset").addEventListener("click", () => {
-    if (!confirm("두 사람의 체크를 모두 지울까요? 추가한 항목과 메모는 남습니다.")) return;
+    if (!confirm("두 사람의 체크를 모두 지울까요? 추가한 항목은 남습니다.")) return;
     PEOPLE.forEach(p => { checked[p.k] = []; });
     write(KEY_C, checked);
     draw();
@@ -1998,7 +1955,8 @@ function saveExtraCand(){
     if (!confirm(`"${c.n}"을(를) ${label} 일정 끝에 넣을까요?`)) return;
     const obj = {time:"—", name:c.n, ja:c.j, desc:c.w || "", mode:"walk"};
     if (c.lat){ obj.lat = c.lat; obj.lng = c.lng; } else obj.type = "info";
-    if (c.c === "식사") obj.kind = "식사";
+    if (c.c === "식사") obj.kind = "점심";
+    else if (c.c === "카페·디저트") obj.kind = "카페";
     DAYS[target].items.push(obj);
     try{ localStorage.setItem("fuk26.day." + DAYS[target].date, JSON.stringify(DAYS[target].items)); }catch(e){}
     if (target === dayIdx) refreshDay();
