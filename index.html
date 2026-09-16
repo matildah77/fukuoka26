@@ -93,7 +93,8 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .editbar button.primary{background:var(--dc,#123048);border-color:var(--dc,#123048);color:#fff}
 .rowctl{display:flex;gap:6px;margin:-8px 0 16px 30px}
 .rowctl button{border:1px solid var(--line);background:#fff;border-radius:8px;
-  font-size:11.5px;color:var(--muted);padding:5px 10px;height:30px}
+  font-size:12px;color:var(--ink-2);padding:5px 11px;height:32px;min-width:34px}
+.rowctl button:disabled{opacity:.3}
 .rowctl button.del{color:#C2405F}
 .rowctl .grip{cursor:grab;touch-action:none}
 .rowctl .grip:active{cursor:grabbing}
@@ -788,18 +789,21 @@ function renderTimeline(){
     if (editMode){
       const ctl = document.createElement("div");
       ctl.className = "rowctl";
-      ctl.innerHTML = `<button type="button" class="grip" data-a="grip" title="끌어서 순서 변경" aria-label="끌어서 순서 변경">⠿ 이동</button>
-        <button type="button" data-a="edit" title="수정">✎ 수정</button>
-        <button type="button" class="del" data-a="del" title="삭제">✕</button>`;
+      const last = day.items.length - 1;
+      ctl.innerHTML = `<button type="button" data-a="up" aria-label="위로"${idx === 0 ? " disabled" : ""}>↑</button>
+        <button type="button" data-a="down" aria-label="아래로"${idx === last ? " disabled" : ""}>↓</button>
+        <button type="button" data-a="edit">✎ 수정</button>
+        <button type="button" class="del" data-a="del" aria-label="삭제">✕</button>`;
       ctl.addEventListener("click", ev => {
         const b = ev.target.closest("button");
         if (!b) return;
         const a = b.dataset.a;
-        if (a === "edit") openForm(idx);
+        if (a === "up") moveItem(idx, -1);
+        else if (a === "down") moveItem(idx, 1);
+        else if (a === "edit") openForm(idx);
         else if (a === "del") deleteItem(idx);
       });
       li.appendChild(ctl);
-      attachDrag(ctl.querySelector(".grip"), ol);
     }
 
     if (isPlace){
@@ -893,7 +897,6 @@ function renderEditPanel(){
   const edited = (() => { try{ return !!localStorage.getItem(dayKey(DAYS[dayIdx])); }catch(e){ return false; } })();
   box.innerHTML = `<div class="editbar">
       <button type="button" class="primary" id="addBtn">+ 일정 추가</button>
-      <span style="font-size:11.5px;color:var(--muted);align-self:center">이동을 잡고 끌면 순서가 바뀌어요</span>
       ${edited ? `<button type="button" id="resetBtn">이 날 원래대로</button>` : ""}
     </div><div id="formSlot"></div>`;
   box.querySelector("#addBtn").addEventListener("click", () => openForm(-1));
