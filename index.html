@@ -104,6 +104,7 @@ body.dragging-lock .tl li{touch-action:none}
 
 .tl li.dragging .item{background:var(--surface);border:1px dashed var(--muted)}
 .tl.dragmode li::before{opacity:.25}
+.formhost{margin:0 0 16px 30px}
 .eform{border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 16px;background:#fff}
 .eform .fr{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin:0 0 9px}
 .eform .fr.one{grid-template-columns:1fr}
@@ -870,6 +871,7 @@ function renderTimeline(){
 /* ============ 일정 편집 ============ */
 let editMode = false;
 let pickingCoord = false;
+let activeForm = null;
 const ORIG_ITEMS = JSON.parse(JSON.stringify(DAYS.map(d => d.items)));
 const dayKey = d => "fuk26.day." + d.date;
 
@@ -932,9 +934,24 @@ function renderEditPanel(){
   });
 }
 
+function formHost(i){
+  // 기존 인라인 폼 정리
+  document.querySelectorAll(".formhost").forEach(n => n.remove());
+  const top = document.getElementById("formSlot");
+  if (top) top.innerHTML = "";
+  if (i < 0) return top;
+  const li = document.querySelector(`#timeline li[data-idx="${i}"]`);
+  if (!li) return top;
+  const host = document.createElement("div");
+  host.className = "formhost";
+  li.insertAdjacentElement("afterend", host);
+  return host;
+}
+
 function openForm(i){
-  const slot = document.getElementById("formSlot");
+  const slot = formHost(i);
   if (!slot) return;
+  activeForm = slot;
   const isNew = i < 0;
   const it = isNew ? {time:"", name:"", ja:"", desc:"", kind:"", mode:"walk", how:"", lat:"", lng:""}
                    : DAYS[dayIdx].items[i];
@@ -1000,13 +1017,18 @@ function openForm(i){
     }
   });
 
+  slot.scrollIntoView({block:"center", behavior:"smooth"});
+
   slot.querySelector("#f-pick").addEventListener("click", () => {
     if (mapPanel.classList.contains("folded")) setMapOpen(true, true);
     pickingCoord = true;
     slot.querySelector("#f-pick").textContent = "지도를 탭하세요…";
     map.getContainer().style.cursor = "crosshair";
   });
-  slot.querySelector("#f-cancel").addEventListener("click", () => { slot.innerHTML = ""; stopPicking(); });
+  slot.querySelector("#f-cancel").addEventListener("click", () => {
+    slot.classList.contains("formhost") ? slot.remove() : (slot.innerHTML = "");
+    activeForm = null; stopPicking();
+  });
   slot.querySelector("#f-save").addEventListener("click", () => {
     const g = id => slot.querySelector("#f-" + id).value.trim();
     const obj = {time:g("time"), name:g("name"), ja:g("ja"), desc:g("desc"),
@@ -1030,6 +1052,7 @@ function openForm(i){
       ["flag", "near"].forEach(k => { if (keep[k]) obj[k] = keep[k]; });
       DAYS[dayIdx].items[i] = obj;
     }
+    activeForm = null;
     stopPicking();
     if (!saveDay()) alert("브라우저에 저장하지 못했어요. 이 화면에서는 저장이 막혀 있을 수 있어요.");
     refreshDay();
@@ -1037,8 +1060,9 @@ function openForm(i){
 }
 
 function openNearForm(itemIdx){
-  const slot = document.getElementById("formSlot");
+  const slot = formHost(itemIdx);
   if (!slot) return;
+  activeForm = slot;
   const it = DAYS[dayIdx].items[itemIdx];
   slot.innerHTML = `<div class="eform">
     <div class="fr one"><div><label>${it.name} 근처에 추가</label>
@@ -1065,7 +1089,7 @@ function openNearForm(itemIdx){
       <button type="button" class="primary" id="n-save">추가</button>
     </div>
   </div>`;
-  slot.scrollIntoView({block:"nearest", behavior:"smooth"});
+  slot.scrollIntoView({block:"center", behavior:"smooth"});
 
   const q = id => slot.querySelector("#n-" + id);
   q("apply").addEventListener("click", () => {
@@ -1085,7 +1109,10 @@ function openNearForm(itemIdx){
     q("pick").textContent = "지도를 탭하세요…";
     map.getContainer().style.cursor = "crosshair";
   });
-  q("cancel").addEventListener("click", () => { slot.innerHTML = ""; stopPicking(); });
+  q("cancel").addEventListener("click", () => {
+    slot.classList.contains("formhost") ? slot.remove() : (slot.innerHTML = "");
+    activeForm = null; stopPicking();
+  });
   q("save").addEventListener("click", () => {
     const n = q("name").value.trim();
     if (!n){ alert("가게 이름을 적어주세요."); return; }
@@ -1094,8 +1121,8 @@ function openNearForm(itemIdx){
     if (!isNaN(la) && !isNaN(ln)){ obj.lat = la; obj.lng = ln; }
     if (!it.near) it.near = [];
     it.near.push(obj);
+    activeForm = null;
     stopPicking();
-    slot.innerHTML = "";
     commit();
   });
 }
@@ -1314,7 +1341,7 @@ function initMap(){
   layer = L.layerGroup().addTo(map);
   map.on("click", e => {
     if (pickingCoord){
-      const slot = document.getElementById("formSlot");
+      const slot = activeForm || document.getElementById("formSlot");
       const pre = pickingCoord === "near" ? "n" : "f";
       if (slot && slot.querySelector("#" + pre + "-lat")){
         slot.querySelector("#" + pre + "-lat").value = e.latlng.lat.toFixed(5);
