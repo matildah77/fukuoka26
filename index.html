@@ -271,7 +271,22 @@ body.dragging-lock .tl li{touch-action:none}
 .chk .txt{flex:1;min-width:0}
 .chk .txt b{font-weight:600}
 .chk small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:2px}
+.chk{flex-wrap:wrap}
 .chk.done{background:#F3FAF7;border-color:#CFE8DE}
+.memos{display:block;margin-top:6px}
+.memo{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border-radius:8px;
+  padding:4px 8px;font-size:12px;color:var(--ink-2);margin:3px 5px 0 0;line-height:1.4}
+.memo i{font-style:normal;font-size:13px}
+.memo .mdel{border:0;background:none;color:var(--muted);font-size:10px;padding:0 0 0 2px;cursor:pointer}
+.memoform{display:flex;gap:5px;align-items:center;margin-top:7px;flex-wrap:wrap}
+.memoform .mw{border:1.5px solid var(--line);background:#fff;border-radius:999px;width:30px;height:30px;
+  padding:0;font-size:14px;opacity:.35;filter:grayscale(1)}
+.memoform .mw.on{opacity:1;filter:none;border-color:#1E8A6E}
+.memoform .mi{flex:1;min-width:120px;border:1px solid var(--line);border-radius:8px;
+  padding:7px 9px;font-size:13px;font-family:inherit}
+.memoform .ms{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:8px;
+  padding:7px 12px;font-size:12.5px}
+.who button.mo{font-size:14px;opacity:.55;filter:none}
 .chk.done .txt b{color:var(--muted);text-decoration:line-through}
 .who{display:flex;gap:5px;flex:0 0 auto}
 .who button{border:1.5px solid var(--line);background:#fff;border-radius:999px;
@@ -1453,6 +1468,9 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
   PEOPLE.forEach(p => { if (!Array.isArray(checked[p.k])) checked[p.k] = []; });
   let extra = read(KEY_I, []);
   if (!Array.isArray(extra)) extra = [];
+  const KEY_M = "fuk26.memos";
+  let memos = read(KEY_M, {});
+  if (!memos || typeof memos !== "object") memos = {};
 
   const base = CHECKS.map((c, i) => ({...c, id:"b" + i}));
   const all = () => [...base, ...extra];
@@ -1482,13 +1500,57 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
         const row = document.createElement("div");
         row.className = "chk";
         if (PEOPLE.every(p => isOn(p.k, c.id))) row.classList.add("done");
-        row.innerHTML = `<span class="txt"><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ""}</span>
+        const ms = memos[c.id] || [];
+        row.innerHTML = `<span class="txt"><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ""}
+            ${ms.length ? `<span class="memos">${ms.map((m, mi) => {
+              const who = PEOPLE.find(p => p.k === m.w);
+              return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t}<button type="button" class="mdel" data-mi="${mi}" aria-label="메모 삭제">✕</button></span>`;
+            }).join("")}</span>` : ""}
+            <span class="memoslot"></span></span>
           <span class="who">${PEOPLE.map(p =>
-            `<button type="button" data-p="${p.k}" title="${p.n}" aria-label="${p.n}" aria-pressed="${isOn(p.k, c.id)}">${p.e}</button>`).join("")}${
+            `<button type="button" data-p="${p.k}" title="${p.n}" aria-label="${p.n}" aria-pressed="${isOn(p.k, c.id)}">${p.e}</button>`).join("")}
+            <button type="button" class="mo" data-p="memo" aria-label="메모">💬</button>${
             c.id[0] === "c" ? `<button type="button" class="rm" data-p="rm" aria-label="삭제">✕</button>` : ""}</span>`;
+
+        row.querySelector(".txt").addEventListener("click", e => {
+          const b = e.target.closest(".mdel");
+          if (!b) return;
+          const list = memos[c.id] || [];
+          list.splice(Number(b.dataset.mi), 1);
+          if (!list.length) delete memos[c.id]; else memos[c.id] = list;
+          write(KEY_M, memos);
+          draw();
+        });
         row.querySelector(".who").addEventListener("click", e => {
           const b = e.target.closest("button");
           if (!b) return;
+          if (b.dataset.p === "memo"){
+            const slot = row.querySelector(".memoslot");
+            if (slot.innerHTML){ slot.innerHTML = ""; return; }
+            slot.innerHTML = `<span class="memoform">
+              ${PEOPLE.map((p, k) => `<button type="button" class="mw${k === 0 ? " on" : ""}" data-w="${p.k}">${p.e}</button>`).join("")}
+              <input class="mi" placeholder="한두 줄 메모">
+              <button type="button" class="ms">저장</button></span>`;
+            let who = PEOPLE[0].k;
+            slot.querySelectorAll(".mw").forEach(bt => bt.addEventListener("click", ev => {
+              ev.stopPropagation();
+              who = bt.dataset.w;
+              slot.querySelectorAll(".mw").forEach(x => x.classList.toggle("on", x === bt));
+            }));
+            const inp = slot.querySelector(".mi");
+            const save = () => {
+              const t = inp.value.trim();
+              if (!t) return;
+              memos[c.id] = [...(memos[c.id] || []), {w:who, t}];
+              write(KEY_M, memos);
+              draw();
+            };
+            slot.querySelector(".ms").addEventListener("click", ev => { ev.stopPropagation(); save(); });
+            inp.addEventListener("keydown", ev => { ev.stopPropagation(); if (ev.key === "Enter") save(); });
+            inp.addEventListener("click", ev => ev.stopPropagation());
+            inp.focus();
+            return;
+          }
           if (b.dataset.p === "rm"){
             if (!confirm(`"${c.t}" 항목을 지울까요?`)) return;
             extra = extra.filter(x => x.id !== c.id);
@@ -1527,7 +1589,7 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
   input.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
 
   document.getElementById("checkReset").addEventListener("click", () => {
-    if (!confirm("두 사람의 체크를 모두 지울까요? 추가한 항목은 남습니다.")) return;
+    if (!confirm("두 사람의 체크를 모두 지울까요? 추가한 항목과 메모는 남습니다.")) return;
     PEOPLE.forEach(p => { checked[p.k] = []; });
     write(KEY_C, checked);
     draw();
