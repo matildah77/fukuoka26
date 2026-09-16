@@ -143,6 +143,9 @@ body.dragging-lock .tl li{touch-action:none}
   padding:4px 10px;font-size:11.5px;color:var(--muted)}
 .mchip.warn{border-color:#F0DDBE;background:#FFFBF4;color:#7A5A22}
 .mchip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.mchip.memo-chip{border-color:#CFE8DE;background:#F3FAF7;color:#1F5B4A}
+.mchip.memo-chip.on{background:#1E8A6E;border-color:#1E8A6E;color:#fff}
+.imemo{margin:8px 0 0;padding:10px 11px;background:var(--surface);border-radius:10px}
 .mchip.warn.on{background:#7A5A22;border-color:#7A5A22;color:#fff}
 .hours{margin:6px 0 0;font-size:12.5px;color:var(--ink-2);font-weight:600}
 .hours::before{content:"영업시간 ";color:var(--muted);font-weight:400}
@@ -797,11 +800,15 @@ function renderTimeline(){
       <p class="n">${it.name}${it.ja ? `<small>${it.ja}</small>` : ""}</p>
       ${it.desc ? `<p class="d">${it.desc}</p>` : ""}
       ${how}${how && link ? "<br>" : ""}${link}
-      ${(it.hours || it.tip || it.flag) ? `<div class="mchips">
+      <div class="mchips">
         ${it.hours ? `<button type="button" class="mchip" data-t="hours">🕘 영업</button>` : ""}
         ${it.tip ? `<button type="button" class="mchip" data-t="tip">💡 꿀팁</button>` : ""}
         ${it.flag ? `<button type="button" class="mchip warn" data-t="flag">⚠ 확인</button>` : ""}
+        <button type="button" class="mchip memo-chip" data-t="memo">💬 메모${
+          (itemMemos[memoKey(day, it)] || []).length ? " " + itemMemos[memoKey(day, it)].length : ""}</button>
       </div>
+      <div class="mbox imemo" data-m="memo" hidden></div>
+      ${(it.hours || it.tip || it.flag) ? `
       ${it.hours ? `<p class="hours mbox" data-m="hours" hidden>${it.hours}</p>` : ""}
       ${it.tip ? `<p class="tip mbox" data-m="tip" hidden>${it.tip}</p>` : ""}
       ${it.flag ? `<p class="flag mbox" data-m="flag" hidden>${it.flag}</p>` : ""}` : ""}
@@ -849,9 +856,11 @@ function renderTimeline(){
           if (panel){
             panel.hidden = !panel.hidden;
             chip.classList.toggle("on", !panel.hidden);
+            if (t === "memo" && !panel.hidden) drawItemMemo(panel, day, it);
           }
           return;
         }
+        if (e.target.closest(".imemo")) return;
         const nx = e.target.closest(".nx");
         if (nx){
           const k = Number(nx.dataset.nk);
@@ -878,6 +887,13 @@ function renderTimeline(){
 let editMode = false;
 let pickingCoord = false;
 let activeForm = null;
+
+/* ---- 일정 메모 ---- */
+const IMKEY = "fuk26.itemMemos";
+let itemMemos = {};
+try{ itemMemos = JSON.parse(localStorage.getItem(IMKEY) || "{}") || {}; }catch(e){ itemMemos = {}; }
+const memoKey = (day, it) => `${day.date}::${it.name}`;
+function saveItemMemos(){ try{ localStorage.setItem(IMKEY, JSON.stringify(itemMemos)); }catch(e){} }
 const ORIG_ITEMS = JSON.parse(JSON.stringify(DAYS.map(d => d.items)));
 const dayKey = d => "fuk26.day." + d.date;
 
@@ -1267,6 +1283,49 @@ function renderDayCand(){
       showNear(Number(li.dataset.ni));
     });
   });
+}
+
+function drawItemMemo(panel, day, it){
+  const key = memoKey(day, it);
+  const list = itemMemos[key] || [];
+  panel.innerHTML = `${list.length ? `<div class="memos">${list.map((m, mi) => {
+      const who = PEOPLE.find(p => p.k === m.w);
+      return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t}<button type="button" class="mdel" data-mi="${mi}">✕</button></span>`;
+    }).join("")}</div>` : `<p style="margin:0 0 6px;font-size:12px;color:var(--muted)">아직 메모가 없어요</p>`}
+    <span class="memoform">
+      ${PEOPLE.map((p, k) => `<button type="button" class="mw${k === 0 ? " on" : ""}" data-w="${p.k}">${p.e}</button>`).join("")}
+      <input class="mi" placeholder="한두 줄 메모">
+      <button type="button" class="ms">저장</button></span>`;
+
+  let who = PEOPLE[0].k;
+  panel.querySelectorAll(".mw").forEach(bt => bt.addEventListener("click", ev => {
+    ev.stopPropagation();
+    who = bt.dataset.w;
+    panel.querySelectorAll(".mw").forEach(x => x.classList.toggle("on", x === bt));
+  }));
+  const inp = panel.querySelector(".mi");
+  const save = () => {
+    const t = inp.value.trim();
+    if (!t) return;
+    itemMemos[key] = [...(itemMemos[key] || []), {w:who, t}];
+    saveItemMemos();
+    drawItemMemo(panel, day, it);
+    const chip = panel.parentElement.querySelector(".memo-chip");
+    if (chip) chip.textContent = "💬 메모 " + itemMemos[key].length;
+  };
+  panel.querySelector(".ms").addEventListener("click", ev => { ev.stopPropagation(); save(); });
+  inp.addEventListener("keydown", ev => { ev.stopPropagation(); if (ev.key === "Enter") save(); });
+  inp.addEventListener("click", ev => ev.stopPropagation());
+  panel.querySelectorAll(".mdel").forEach(b => b.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const l = itemMemos[key] || [];
+    l.splice(Number(b.dataset.mi), 1);
+    if (!l.length) delete itemMemos[key]; else itemMemos[key] = l;
+    saveItemMemos();
+    drawItemMemo(panel, day, it);
+    const chip = panel.parentElement.querySelector(".memo-chip");
+    if (chip) chip.textContent = "💬 메모" + ((itemMemos[key] || []).length ? " " + itemMemos[key].length : "");
+  }));
 }
 
 /* ============ 목록 ↔ 지도 선택 연동 ============ */
