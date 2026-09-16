@@ -84,6 +84,30 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .day-head{display:flex;align-items:baseline;gap:9px;margin:0 0 14px}
 .day-head h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
 .day-head span{font-size:13px;color:var(--muted)}
+.editbtn{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:999px;
+  padding:5px 13px;font-size:12.5px;color:var(--ink-2)}
+.editbtn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.editbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 14px}
+.editbar button{border:1px solid var(--line);background:#fff;border-radius:9px;
+  padding:7px 12px;font-size:12.5px;color:var(--ink-2)}
+.editbar button.primary{background:var(--dc,#123048);border-color:var(--dc,#123048);color:#fff}
+.rowctl{display:flex;gap:5px;margin:0 0 16px 30px}
+.rowctl button{width:30px;height:28px;border:1px solid var(--line);background:#fff;border-radius:8px;
+  font-size:12px;color:var(--ink-2);padding:0}
+.rowctl button.del{color:#C2405F}
+.eform{border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 16px;background:#fff}
+.eform .fr{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin:0 0 9px}
+.eform .fr.one{grid-template-columns:1fr}
+.eform label{font-size:11.5px;color:var(--muted);display:block;margin:0 0 3px}
+.eform input,.eform select,.eform textarea{width:100%;border:1px solid var(--line);border-radius:9px;
+  padding:8px 10px;font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff}
+.eform textarea{resize:vertical;min-height:52px}
+.eform .acts{display:flex;gap:7px;margin-top:4px}
+.eform .acts button{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;
+  padding:9px 0;font-size:13px;color:var(--ink-2)}
+.eform .acts button.primary{background:var(--dc,#123048);border-color:var(--dc,#123048);color:#fff;font-weight:600}
+.pickhint{font-size:11.5px;color:#7A5A22;background:#FFF6E8;border:1px solid #F0DDBE;
+  border-radius:8px;padding:7px 9px;margin:0 0 9px}
 
 .tl{list-style:none;margin:0;padding:0}
 .tl li{position:relative;padding:0 0 4px 30px}
@@ -333,7 +357,9 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
       <p class="legend">번호는 그날의 방문 순서예요. 목록에서 장소를 고르면 지도에서도 함께 선택됩니다. 도보·도로 구간은 OSRM 공개 라우팅으로 실제 길을 따라 그리고, 철도와 투어 버스 구간은 이동 순서를 직선으로 이어 표시합니다. 지도 타일 © OpenStreetMap contributors</p>
     </section>
     <section class="panel" id="panel-list" role="tabpanel" aria-labelledby="tab-trip">
-      <div class="day-head"><h2 id="dayTitle"></h2><span id="dayMeta"></span></div>
+      <div class="day-head"><h2 id="dayTitle"></h2><span id="dayMeta"></span>
+        <button type="button" id="editBtn" class="editbtn">편집</button></div>
+      <div id="editPanel"></div>
       <ol class="tl" id="timeline"></ol>
       <div id="dayCand"></div>
     </section>
@@ -662,6 +688,7 @@ function selectDay(i){
   document.getElementById("openAll").href = dayDirectionsUrl(DAYS[i]);
   renderTimeline();
   renderDayCand();
+  renderEditPanel();
   drawMap();
   daysEl.children[i].scrollIntoView({block:"nearest", inline:"nearest"});
 }
@@ -708,6 +735,25 @@ function renderTimeline(){
       }</ul></div>` : ""}
     </div>`;
 
+    if (editMode){
+      const ctl = document.createElement("div");
+      ctl.className = "rowctl";
+      ctl.innerHTML = `<button type="button" data-a="up" title="위로">↑</button>
+        <button type="button" data-a="down" title="아래로">↓</button>
+        <button type="button" data-a="edit" title="수정">✎</button>
+        <button type="button" class="del" data-a="del" title="삭제">✕</button>`;
+      ctl.addEventListener("click", ev => {
+        const b = ev.target.closest("button");
+        if (!b) return;
+        const a = b.dataset.a;
+        if (a === "up") moveItem(idx, -1);
+        else if (a === "down") moveItem(idx, 1);
+        else if (a === "edit") openForm(idx);
+        else if (a === "del") deleteItem(idx);
+      });
+      li.appendChild(ctl);
+    }
+
     if (isPlace){
       li.classList.add("pickable");
       li.dataset.pi = pi;
@@ -724,6 +770,149 @@ function renderTimeline(){
     }
     ol.appendChild(li);
   });
+}
+
+/* ============ 일정 편집 ============ */
+let editMode = false;
+let pickingCoord = false;
+const ORIG_ITEMS = JSON.parse(JSON.stringify(DAYS.map(d => d.items)));
+const dayKey = d => "fuk26.day." + d.date;
+
+(function loadDayEdits(){
+  DAYS.forEach(d => {
+    try{
+      const raw = localStorage.getItem(dayKey(d));
+      if (raw){
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length) d.items = arr;
+      }
+    }catch(e){}
+  });
+})();
+
+function saveDay(){
+  try{ localStorage.setItem(dayKey(DAYS[dayIdx]), JSON.stringify(DAYS[dayIdx].items)); return true; }
+  catch(e){ return false; }
+}
+function refreshDay(){
+  places = DAYS[dayIdx].items.filter(it => it.lat);
+  pickIdx = -1;
+  document.getElementById("openAll").href = dayDirectionsUrl(DAYS[dayIdx]);
+  renderTimeline();
+  renderDayCand();
+  renderEditPanel();
+  drawMap();
+}
+function commit(){ saveDay(); refreshDay(); }
+
+function moveItem(i, dir){
+  const a = DAYS[dayIdx].items;
+  const j = i + dir;
+  if (j < 0 || j >= a.length) return;
+  [a[i], a[j]] = [a[j], a[i]];
+  commit();
+}
+function deleteItem(i){
+  const a = DAYS[dayIdx].items;
+  if (!confirm(`"${a[i].name}" 항목을 지울까요?`)) return;
+  a.splice(i, 1);
+  commit();
+}
+
+function renderEditPanel(){
+  const box = document.getElementById("editPanel");
+  if (!editMode){ box.innerHTML = ""; return; }
+  const edited = (() => { try{ return !!localStorage.getItem(dayKey(DAYS[dayIdx])); }catch(e){ return false; } })();
+  box.innerHTML = `<div class="editbar">
+      <button type="button" class="primary" id="addBtn">+ 일정 추가</button>
+      ${edited ? `<button type="button" id="resetBtn">이 날 원래대로</button>` : ""}
+    </div><div id="formSlot"></div>`;
+  box.querySelector("#addBtn").addEventListener("click", () => openForm(-1));
+  const rb = box.querySelector("#resetBtn");
+  if (rb) rb.addEventListener("click", () => {
+    if (!confirm(`${DAYS[dayIdx].label} 일정을 처음 상태로 되돌릴까요? 직접 고친 내용은 사라져요.`)) return;
+    try{ localStorage.removeItem(dayKey(DAYS[dayIdx])); }catch(e){}
+    DAYS[dayIdx].items = JSON.parse(JSON.stringify(ORIG_ITEMS[dayIdx]));
+    refreshDay();
+  });
+}
+
+function openForm(i){
+  const slot = document.getElementById("formSlot");
+  if (!slot) return;
+  const isNew = i < 0;
+  const it = isNew ? {time:"", name:"", ja:"", desc:"", kind:"", mode:"walk", how:"", lat:"", lng:""}
+                   : DAYS[dayIdx].items[i];
+  const v = k => (it[k] == null ? "" : String(it[k]).replace(/"/g, "&quot;"));
+
+  slot.innerHTML = `<div class="eform">
+    <div class="fr">
+      <div><label>시간</label><input id="f-time" value="${v("time")}" placeholder="19:00"></div>
+      <div><label>구분</label><select id="f-kind">
+        ${["", "아침", "점심", "저녁", "간식"].map(k =>
+          `<option value="${k}"${it.kind === k ? " selected" : ""}>${k || "없음"}</option>`).join("")}
+      </select></div>
+    </div>
+    <div class="fr one"><div><label>장소 이름</label><input id="f-name" value="${v("name")}" placeholder="야키니쿠 · 가게 이름"></div></div>
+    <div class="fr one"><div><label>구글맵 검색어 (일본어 이름이면 정확해요)</label><input id="f-ja" value="${v("ja")}" placeholder="焼肉 ○○ 福岡"></div></div>
+    <div class="fr one"><div><label>메모</label><textarea id="f-desc" placeholder="예약 여부, 주의할 점 등">${v("desc")}</textarea></div></div>
+    <div class="fr">
+      <div><label>이동수단</label><select id="f-mode">
+        <option value="walk"${it.mode === "walk" || !it.mode ? " selected" : ""}>도보·도로</option>
+        <option value="rail"${it.mode === "rail" ? " selected" : ""}>철도</option>
+        <option value="bus"${it.mode === "bus" ? " selected" : ""}>버스</option>
+        <option value="start"${it.mode === "start" ? " selected" : ""}>출발점</option>
+      </select></div>
+      <div><label>이동 시간</label><input id="f-how" value="${v("how")}" placeholder="도보 10분"></div>
+    </div>
+    <div class="pickhint">좌표를 비워두면 지도에 표시되지 않아요. 아래 버튼을 누른 뒤 지도를 탭하면 위치가 채워집니다.</div>
+    <div class="fr">
+      <div><label>위도</label><input id="f-lat" value="${v("lat")}" placeholder="33.5897"></div>
+      <div><label>경도</label><input id="f-lng" value="${v("lng")}" placeholder="130.4207"></div>
+    </div>
+    <div class="fr one"><div><button type="button" id="f-pick" style="width:100%;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 0;font-size:13px;color:var(--ink-2)">지도에서 위치 찍기</button></div></div>
+    <div class="acts">
+      <button type="button" id="f-cancel">취소</button>
+      <button type="button" class="primary" id="f-save">저장</button>
+    </div>
+  </div>`;
+
+  slot.querySelector("#f-pick").addEventListener("click", () => {
+    if (mapPanel.classList.contains("folded")) setMapOpen(true, true);
+    pickingCoord = true;
+    slot.querySelector("#f-pick").textContent = "지도를 탭하세요…";
+    map.getContainer().style.cursor = "crosshair";
+  });
+  slot.querySelector("#f-cancel").addEventListener("click", () => { slot.innerHTML = ""; stopPicking(); });
+  slot.querySelector("#f-save").addEventListener("click", () => {
+    const g = id => slot.querySelector("#f-" + id).value.trim();
+    const obj = {time:g("time"), name:g("name"), ja:g("ja"), desc:g("desc"),
+                 kind:g("kind"), mode:g("mode"), how:g("how")};
+    if (!obj.name){ alert("장소 이름을 적어주세요."); return; }
+    if (!obj.time) obj.time = "—";
+    const la = parseFloat(g("lat")), ln = parseFloat(g("lng"));
+    if (!isNaN(la) && !isNaN(ln)){ obj.lat = la; obj.lng = ln; }
+    if (!obj.kind) delete obj.kind;
+    if (!obj.ja) delete obj.ja;
+    if (!obj.how) delete obj.how;
+    if (!obj.desc) delete obj.desc;
+    if (!obj.lat) obj.type = "info";
+
+    if (isNew) DAYS[dayIdx].items.push(obj);
+    else {
+      const keep = DAYS[dayIdx].items[i];
+      ["hours", "tip", "flag", "near"].forEach(k => { if (keep[k]) obj[k] = keep[k]; });
+      DAYS[dayIdx].items[i] = obj;
+    }
+    stopPicking();
+    if (!saveDay()) alert("브라우저에 저장하지 못했어요. 이 화면에서는 저장이 막혀 있을 수 있어요.");
+    refreshDay();
+  });
+}
+
+function stopPicking(){
+  pickingCoord = false;
+  if (map) map.getContainer().style.cursor = "";
 }
 
 /* ============ 그날의 후보 ============ */
@@ -827,7 +1016,19 @@ function initMap(){
   map = L.map("map", {scrollWheelZoom:false, zoomControl:true}).setView([33.59, 130.40], 11);
   useTiles(0);
   layer = L.layerGroup().addTo(map);
-  map.on("click", () => map.scrollWheelZoom.enable());
+  map.on("click", e => {
+    if (pickingCoord){
+      const slot = document.getElementById("formSlot");
+      if (slot && slot.querySelector("#f-lat")){
+        slot.querySelector("#f-lat").value = e.latlng.lat.toFixed(5);
+        slot.querySelector("#f-lng").value = e.latlng.lng.toFixed(5);
+        slot.querySelector("#f-pick").textContent = "위치가 채워졌어요 · 다시 찍기";
+      }
+      stopPicking();
+      return;
+    }
+    map.scrollWheelZoom.enable();
+  });
 }
 
 async function osrm(a, b){
@@ -1157,6 +1358,15 @@ mapToggle.addEventListener("click", () =>
 let mapOpenInit = true;
 try{ mapOpenInit = localStorage.getItem(MKEY) !== "0"; }catch(e){}
 setMapOpen(mapOpenInit, false);
+
+const editBtn = document.getElementById("editBtn");
+editBtn.addEventListener("click", () => {
+  editMode = !editMode;
+  editBtn.classList.toggle("on", editMode);
+  editBtn.textContent = editMode ? "편집 끝내기" : "편집";
+  stopPicking();
+  refreshDay();
+});
 
 window.addEventListener("resize", setStick);
 
