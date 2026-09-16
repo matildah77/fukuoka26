@@ -160,7 +160,13 @@ body.dragging-lock .tl li{touch-action:none}
 .daycand li.near-sel{background:#fff;border-radius:8px;padding:5px 7px;margin:-5px -7px}
 .daycand li a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line);font-size:11.5px}
 .near{margin:9px 0 0;padding:9px 11px;background:var(--surface);border-radius:10px}
-.near-h{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+.near>summary,.daycand>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px}
+.near>summary::-webkit-details-marker,.daycand>summary::-webkit-details-marker{display:none}
+.near>summary::after,.daycand>summary::after{content:"";width:6px;height:6px;margin-left:auto;
+  border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);
+  transform:rotate(45deg);margin-top:-3px;flex:0 0 auto}
+.near[open]>summary::after,.daycand[open]>summary::after{transform:rotate(225deg);margin-top:2px}
+.near-h{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.02em}
 .near ul{list-style:none;margin:5px 0 0;padding:0;display:grid;gap:6px}
 .near li{font-size:13px;line-height:1.5}
 .near li b{font-weight:600}
@@ -799,7 +805,7 @@ function renderTimeline(){
       ${it.hours ? `<p class="hours mbox" data-m="hours" hidden>${it.hours}</p>` : ""}
       ${it.tip ? `<p class="tip mbox" data-m="tip" hidden>${it.tip}</p>` : ""}
       ${it.flag ? `<p class="flag mbox" data-m="flag" hidden>${it.flag}</p>` : ""}` : ""}
-      ${(it.near && it.near.length) || editMode ? `<div class="near"><div class="near-h">이 근처라면${editMode ? "" : " · 이름을 누르면 지도에 표시돼요"}</div><ul>${
+      ${(it.near && it.near.length) || editMode ? `<details class="near"><summary class="near-h">이 근처라면 ${(it.near || []).length}곳${editMode ? "" : " · 이름을 누르면 지도에 표시돼요"}</summary><ul>${
         (it.near || []).map((x, k) => {
           const ni = x.lat ? nearList.push(x) - 1 : -1;
           return `<li${ni >= 0 ? ` data-ni="${ni}"` : ""}>${
@@ -807,7 +813,7 @@ function renderTimeline(){
           }<em>${x.t}</em><span>${x.w}</span><a class="ng" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.j)}" target="_blank" rel="noopener">구글맵</a>${
             editMode ? `<button type="button" class="nx" data-nk="${k}" aria-label="삭제">✕</button>` : ""}</li>`;
         }).join("")
-      }</ul>${editMode ? `<button type="button" class="naddbtn">+ 근처 추천 추가</button>` : ""}</div>` : ""}
+      }</ul>${editMode ? `<button type="button" class="naddbtn">+ 근처 추천 추가</button>` : ""}</details>` : ""}
     </div>`;
 
     if (editMode){
@@ -1246,14 +1252,14 @@ function renderDayCand(){
   const rows = (window.CAND || []).filter(c => c.d === day.label && !shown.has(c.j));
   if (!rows.length){ box.innerHTML = ""; return; }
 
-  box.innerHTML = `<div class="daycand"><div class="near-h">${day.label}에 가면 좋은 후보 ${rows.length}곳 · 이름을 누르면 지도에 표시돼요</div><ul>${
+  box.innerHTML = `<details class="daycand"><summary class="near-h">${day.label}에 가면 좋은 후보 ${rows.length}곳 · 이름을 누르면 지도에 표시돼요</summary><ul>${
     rows.map(c => {
       const ni = c.lat ? nearList.push(c) - 1 : -1;
       return `<li${ni >= 0 ? ` data-ni="${ni}"` : ""}>${
         ni >= 0 ? `<b class="nm">${c.n}</b>` : `<b>${c.n}</b>`
       }<em>${c.c}</em><span>${c.w2} · ${c.w}</span><a class="ng" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.j)}" target="_blank" rel="noopener">구글맵</a></li>`;
     }).join("")
-  }</ul></div>`;
+  }</ul></details>`;
 
   box.querySelectorAll("li[data-ni]").forEach(li => {
     li.addEventListener("click", e => {
