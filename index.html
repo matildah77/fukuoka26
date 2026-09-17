@@ -109,7 +109,7 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .rowctl button{border:1px solid var(--line);background:#fff;border-radius:8px;
   font-size:12px;color:var(--ink-2);padding:5px 11px;height:32px;min-width:34px}
 .rowctl button:disabled{opacity:.3}
-.rowctl button.del{color:#C2405F}
+.rowctl button.del{color:#B3283F;border-color:#E8BCC4;background:#FFF5F7;font-weight:700}
 .rowctl .grip{cursor:grab;touch-action:none}
 .rowctl .grip:active{cursor:grabbing}
 .tl li.dragging{opacity:.55}
@@ -168,8 +168,10 @@ body.dragging-lock .tl li{touch-action:none}
 .cmt .ch{margin:0;font-size:12px;color:var(--muted);font-weight:600}
 .cmt .ch b{color:var(--ink);font-weight:700;margin-right:6px}
 .cmt .ct{margin:2px 0 0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-.cmt .cx{flex:0 0 auto;border:0;background:none;color:var(--line);font-size:12px;cursor:pointer;padding:3px}
-.cmt .cx:hover{color:#C2405F}
+.cmt .cx{flex:0 0 auto;border:2px solid #E8BCC4;background:#FFF5F7;color:#B3283F;
+  font-size:12px;font-weight:700;cursor:pointer;padding:0;width:30px;height:30px;
+  border-radius:0;line-height:1}
+.cmt .cx:hover,.cmt .cx:active{background:#B3283F;border-color:#B3283F;color:#fff}
 .ph{border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 8px;background:#fff}
 .ph .ko{margin:0;font-size:12.5px;color:var(--muted)}
 .ph .ja{margin:4px 0 0;font-size:16px;font-weight:700;line-height:1.45;letter-spacing:-.01em}
@@ -241,8 +243,8 @@ body.dragging-lock .tl li{touch-action:none}
 .near li .nm:hover{color:var(--ink);border-color:var(--ink)}
 .near li.near-sel{background:#fff;border-radius:8px;padding:5px 7px;margin:-5px -7px}
 .near li .ng{display:inline-block;margin-top:3px;font-size:11.5px}
-.near li .nx{border:1px solid var(--line);background:#fff;border-radius:7px;color:#C2405F;
-  font-size:11px;padding:2px 7px;margin-left:7px}
+.near li .nx{border:2px solid #E8BCC4;background:#FFF5F7;color:#B3283F;
+  font-size:11.5px;font-weight:700;padding:4px 9px;margin-left:7px}
 .naddbtn{width:100%;margin-top:9px;border:1px dashed var(--line);background:#fff;border-radius:9px;
   padding:8px 0;font-size:12.5px;color:var(--ink-2)}
 .near li a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line)}
@@ -363,8 +365,8 @@ body.dragging-lock .tl li{touch-action:none}
 .who button{border:1.5px solid var(--line);background:#fff;border-radius:999px;
   width:36px;height:36px;padding:0;font-size:17px;line-height:1;opacity:.35;filter:grayscale(1)}
 .who button[aria-pressed="true"]{background:#F1FAF5;border-color:#3BB98D;opacity:1;filter:none;transform:scale(1.06)}
-.who button.rm{border-style:dashed;color:#C2405F;width:32px;height:36px;font-size:13px;
-  opacity:1;filter:none}
+.who button.rm{border:2px solid #E8BCC4;background:#FFF5F7;color:#B3283F;width:34px;height:34px;
+  font-size:13px;font-weight:700;opacity:1;filter:none}
 .prog{font-size:12.5px;color:var(--muted);margin:0 0 12px}
 .progrow{display:flex;align-items:center;gap:8px;margin:0 0 10px}
 .progrow button{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:999px;
@@ -936,7 +938,7 @@ function dayDirectionsUrl(day){
 
 
 /* ============ 새 버전 자동 반영 ============ */
-const BUILD = "20260917015414";
+const BUILD = "20260917015719";
 (function checkUpdate(){
   const ping = () => fetch("version.txt?t=" + Date.now(), {cache:"no-store"})
     .then(r => r.ok ? r.text() : null)
