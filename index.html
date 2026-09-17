@@ -1788,7 +1788,7 @@ const GROUPS = ["서류", "돈·통신", "짐", "기타"];
         const row = document.createElement("div");
         row.className = "chk";
         if (PEOPLE.every(p => isOn(p.k, c.id))) row.classList.add("done");
-        row.innerHTML = `<span class="txt"><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ""}</span>
+        row.innerHTML = `<span class="txt"><b>${c.t}</b></span>
           <span class="who">${PEOPLE.map(p =>
             `<button type="button" data-p="${p.k}" title="${p.n}" aria-label="${p.n}" aria-pressed="${isOn(p.k, c.id)}">${p.e}</button>`).join("")}${
             c.id[0] === "c" ? `<button type="button" class="rm" data-p="rm" aria-label="삭제">✕</button>` : ""}</span>`;
