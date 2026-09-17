@@ -165,6 +165,13 @@ body.dragging-lock .tl li{touch-action:none}
 .cmt .ct{margin:2px 0 0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .cmt .cx{flex:0 0 auto;border:0;background:none;color:var(--line);font-size:12px;cursor:pointer;padding:3px}
 .cmt .cx:hover{color:#C2405F}
+.ph{border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 8px;background:#fff}
+.ph .ko{margin:0;font-size:12.5px;color:var(--muted)}
+.ph .ja{margin:4px 0 0;font-size:16px;font-weight:700;line-height:1.45;letter-spacing:-.01em}
+.ph .yo{margin:3px 0 0;font-size:12.5px;color:#7C6BB0;font-weight:600}
+.ph .hint{margin:6px 0 0;font-size:11.5px;color:var(--muted);line-height:1.5}
+.talkgroup{margin:0 0 20px}
+.talkgroup h3{font-size:14px;font-weight:800;margin:0 0 9px;display:flex;align-items:center;gap:6px}
 .composer{border:1.5px solid var(--line);border-radius:20px;padding:14px;margin:0 0 20px;
   background:#fff;box-shadow:0 2px 10px rgba(107,91,154,.06)}
 .cwho{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px}
@@ -290,7 +297,7 @@ body.dragging-lock .tl li{touch-action:none}
 
 /* ---------- info cards ---------- */
 .info{margin-top:44px}
-#panel-cand,#panel-prep,#panel-memo{margin-top:16px}
+#panel-cand,#panel-prep,#panel-memo,#panel-talk{margin-top:16px}
 .info h2{font-size:18px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
 .info .lead{margin:0 0 16px;color:var(--muted);font-size:13px}
 .cards{display:grid;gap:12px;grid-template-columns:1fr;margin:0 0 32px}
@@ -449,6 +456,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
     <button id="tab-trip" data-v="trip" role="tab" aria-selected="true" aria-controls="panel-list">일정</button>
     <button id="tab-cand" data-v="cand" role="tab" aria-selected="false" aria-controls="panel-cand">후보</button>
     <button id="tab-memo" data-v="memo" role="tab" aria-selected="false" aria-controls="panel-memo">메모</button>
+    <button id="tab-talk" data-v="talk" role="tab" aria-selected="false" aria-controls="panel-talk">회화</button>
     <button id="tab-prep" data-v="prep" role="tab" aria-selected="false" aria-controls="panel-prep">준비물</button>
   </div>
   <nav class="daybar" aria-label="날짜 선택">
@@ -513,6 +521,13 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
     <div id="linkedMemos"></div>
   </section>
 
+
+  <section class="info" id="panel-talk" role="tabpanel" aria-labelledby="tab-talk" hidden>
+    <h2>여행 회화</h2>
+    <p class="lead">상황을 고르면 바로 쓸 문장이 나와요. 일본어 줄을 보여주면 됩니다.</p>
+    <div class="filters" id="talkFilter"></div>
+    <div id="talkList"></div>
+  </section>
 
   <section class="info" id="panel-prep" role="tabpanel" aria-labelledby="tab-prep" hidden>
 
@@ -2077,6 +2092,98 @@ const SOS = [
   p:"미리 만날 장소를 정해두면 좋아요. 후쿠오카에서는 하카타역 하카타구치 개찰구나 텐진 지하상가가 찾기 쉽습니다. 전화가 안 되면 호텔 로비로 모이기로 정해두세요. 일본은 공공 와이파이가 많아 메신저는 대체로 통합니다."}
 ];
 
+/* ============ 여행 회화 ============ */
+const TALK = [
+ {g:"🙂 기본", rows:[
+  ["안녕하세요","こんにちは","콘니치와"],
+  ["감사합니다","ありがとうございます","아리가토- 고자이마스"],
+  ["죄송합니다 / 실례합니다","すみません","스미마셍"],
+  ["네 / 아니요","はい / いいえ","하이 / 이이에"],
+  ["한국에서 왔어요","韓国から来ました","칸코쿠카라 키마시타"],
+  ["일본어를 잘 못해요","日本語があまり話せません","니홍고가 아마리 하나세마셍"],
+  ["영어 되나요?","英語は通じますか？","에-고와 츠-지마스카"],
+  ["천천히 말해 주세요","ゆっくり話してください","윳쿠리 하나시테 쿠다사이"]
+ ]},
+ {g:"🍜 식당", rows:[
+  ["두 명이요","二人です","후타리데스"],
+  ["얼마나 기다려야 하나요?","どのくらい待ちますか？","도노쿠라이 마치마스카"],
+  ["이름 적을게요","名前を書きます","나마에오 카키마스", "인기 가게는 대기 명부에 이름을 적어요"],
+  ["이걸로 주세요","これをください","코레오 쿠다사이", "메뉴를 가리키면서"],
+  ["추천은 뭐예요?","おすすめは何ですか？","오스스메와 난데스카"],
+  ["맵지 않게 해주세요","辛くしないでください","카라쿠 시나이데 쿠다사이"],
+  ["나눠 먹을게요","シェアします","셰아시마스"],
+  ["한 잔 더 주세요","もう一杯ください","모- 잇파이 쿠다사이"],
+  ["계산할게요","お会計お願いします","오카이케- 오네가이시마스"],
+  ["따로 계산 되나요?","別々に払えますか？","베츠베츠니 하라에마스카"],
+  ["잘 먹었습니다","ごちそうさまでした","고치소-사마데시타"]
+ ]},
+ {g:"🚃 교통", rows:[
+  ["하카타역까지 가나요?","博多駅まで行きますか？","하카타에키마데 이키마스카"],
+  ["자유석은 어디예요?","自由席はどこですか？","지유-세키와 도코데스카"],
+  ["몇 번 승강장이에요?","何番のりばですか？","난반 노리바데스카"],
+  ["이 열차 맞나요?","この電車で合っていますか？","코노 덴샤데 앗테이마스카"],
+  ["막차는 몇 시예요?","終電は何時ですか？","슈-덴와 난지데스카", "모지코에서 돌아올 때 꼭"],
+  ["여기서 내려요","ここで降ります","코코데 오리마스"],
+  ["공항까지 얼마나 걸려요?","空港までどのくらいかかりますか？","쿠-코-마데 도노쿠라이 카카리마스카"]
+ ]},
+ {g:"🛍 쇼핑", rows:[
+  ["얼마예요?","いくらですか？","이쿠라데스카"],
+  ["면세 되나요?","免税できますか？","멘제- 데키마스카", "여권을 보여주면 돼요"],
+  ["카드 되나요?","カードは使えますか？","카-도와 츠카에마스카"],
+  ["봉투 주세요","袋をください","후쿠로오 쿠다사이"],
+  ["따로 포장해 주세요","別々に包んでください","베츠베츠니 츠츤데 쿠다사이", "술병 살 때 유용해요"],
+  ["깨지기 쉬워요","割れ物です","와레모노데스"],
+  ["그냥 볼게요","見ているだけです","미테이루 다케데스"]
+ ]},
+ {g:"🏨 숙소", rows:[
+  ["체크인 할게요","チェックインお願いします","첵쿠인 오네가이시마스"],
+  ["짐을 맡길 수 있나요?","荷物を預かってもらえますか？","니모츠오 아즈캇테 모라에마스카", "마지막 날 체크아웃 후에"],
+  ["짐 찾으러 왔어요","荷物を受け取りに来ました","니모츠오 우케토리니 키마시타"],
+  ["수건 하나 더 주세요","タオルをもう一枚ください","타오루오 모- 이치마이 쿠다사이"],
+  ["와이파이 비밀번호가 뭐예요?","Wi-Fiのパスワードは何ですか？","와이화이노 파스와-도와 난데스카"]
+ ]},
+ {g:"🆘 곤란할 때", rows:[
+  ["도와주세요","助けてください","타스케테 쿠다사이"],
+  ["병원에 가고 싶어요","病院に行きたいです","뵤-인니 이키타이데스"],
+  ["약국이 어디예요?","薬局はどこですか？","약쿄쿠와 도코데스카"],
+  ["지갑을 잃어버렸어요","財布をなくしました","사이후오 나쿠시마시타"],
+  ["여권을 잃어버렸어요","パスポートをなくしました","파스포-토오 나쿠시마시타"],
+  ["경찰을 불러 주세요","警察を呼んでください","케-사츠오 욘데 쿠다사이"],
+  ["한국어 할 수 있는 분 계세요?","韓国語が話せる人はいますか？","칸코쿠고가 하나세루 히토와 이마스카"],
+  ["길을 잃었어요","道に迷いました","미치니 마요이마시타"]
+ ]}
+];
+
+(function renderTalk(){
+  const fw = document.getElementById("talkFilter");
+  const list = document.getElementById("talkList");
+  if (!fw || !list) return;
+  let cur = "전체";
+
+  const draw = () => {
+    list.innerHTML = TALK.filter(g => cur === "전체" || g.g === cur).map(g => `
+      <div class="talkgroup"><h3>${g.g}</h3>${g.rows.map(r => `
+        <div class="ph">
+          <p class="ko">${r[0]}</p>
+          <p class="ja">${r[1]}</p>
+          <p class="yo">${r[2]}</p>
+          ${r[3] ? `<p class="hint">${r[3]}</p>` : ""}
+        </div>`).join("")}</div>`).join("");
+  };
+
+  const l = document.createElement("label");
+  const sel = document.createElement("select");
+  [["전체", "상황 전체"], ...TALK.map(g => [g.g, g.g])].forEach(([v, t]) => {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = t;
+    sel.appendChild(o);
+  });
+  sel.addEventListener("change", () => { cur = sel.value; draw(); });
+  l.appendChild(sel);
+  fw.appendChild(l);
+  draw();
+})();
+
 /* ============ 메모 탭 ============ */
 const BKEY = "fuk26.boardMemos";
 let boardMemos = [];
@@ -2182,6 +2289,8 @@ function renderBoard(){
 const tabTrip = document.getElementById("tab-trip");
 const tabPrep = document.getElementById("tab-prep");
 const tabMemo = document.getElementById("tab-memo");
+const tabTalk = document.getElementById("tab-talk");
+const panelTalk = document.getElementById("panel-talk");
 const panelMemo = document.getElementById("panel-memo");
 const tabCand = document.getElementById("tab-cand");
 const panelList = document.getElementById("panel-list");
@@ -2204,6 +2313,7 @@ function setView(v){
   tabPrep.setAttribute("aria-selected", String(v === "prep"));
   tabCand.setAttribute("aria-selected", String(v === "cand"));
   tabMemo.setAttribute("aria-selected", String(v === "memo"));
+  tabTalk.setAttribute("aria-selected", String(v === "talk"));
 
   daybar.hidden = !trip;
   wxBox.hidden = !trip;
@@ -2218,6 +2328,7 @@ tabTrip.addEventListener("click", () => setView("trip"));
 tabPrep.addEventListener("click", () => { setView("prep"); window.scrollTo({top:0, behavior:"smooth"}); });
 tabCand.addEventListener("click", () => { setView("cand"); window.scrollTo({top:0, behavior:"smooth"}); });
 tabMemo.addEventListener("click", () => { setView("memo"); window.scrollTo({top:0, behavior:"smooth"}); });
+tabTalk.addEventListener("click", () => { setView("talk"); window.scrollTo({top:0, behavior:"smooth"}); });
 const mapPanel = document.getElementById("panel-map");
 const mapToggle = document.getElementById("mapToggle");
 const MKEY = "fuk26.mapOpen";
