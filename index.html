@@ -10,12 +10,12 @@
   --ink:#0F1B26;
   --ink-2:#3C4A57;
   --muted:#6E7C8A;
-  --line:#DFE5EA;
-  --line-soft:#EDF1F4;
-  --bg:#FFFFFF;
-  --surface:#F5F7F9;
-  --navy:#123048;
-  --radius:14px;
+  --line:#EBE4EF;
+  --line-soft:#F5F0F7;
+  --bg:#FFFCFE;
+  --surface:#F8F4FA;
+  --navy:#6B5B9A;
+  --radius:20px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -33,18 +33,20 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 :focus-visible{outline:2px solid #2F6FB5;outline-offset:2px;border-radius:6px}
 
 /* ---------- header ---------- */
-.hero{background:var(--navy);color:#fff;padding:26px 18px 22px}
+.hero{background:linear-gradient(135deg,#7C6BB0 0%,#A98BC7 55%,#E5A3C0 100%);
+  color:#fff;padding:26px 18px 26px;border-radius:0 0 28px 28px}
 .hero-in{max-width:1120px;margin:0 auto}
 .route-line{font-size:11.5px;letter-spacing:.14em;color:#8FB3CC;margin:0 0 10px}
-.hero h1{margin:0;font-size:27px;line-height:1.25;font-weight:800;letter-spacing:-.02em}
-.hero .sub{margin:8px 0 0;color:#C3D6E4;font-size:13.5px}
+.hero h1{margin:0;font-size:27px;line-height:1.25;font-weight:800;letter-spacing:-.03em}
+.hero .sub{margin:9px 0 0;color:rgba(255,255,255,.82);font-size:13.5px}
 .hero .sub b{color:#fff;font-weight:600}
 .syncbadge{display:inline-block;width:8px;height:8px;border-radius:50%;
   background:#8296A6;margin:0 0 1px 8px;vertical-align:middle;
   box-shadow:0 0 0 3px rgba(255,255,255,.08)}
 .syncbadge.on{background:#5BD7A4;box-shadow:0 0 0 3px rgba(91,215,164,.22)}
-.dday{display:inline-block;margin-top:14px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
-  padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:600}
+.dday{display:inline-block;margin-top:15px;background:rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:999px;
+  font-size:12.5px;font-weight:700;backdrop-filter:blur(4px)}
 
 /* ---------- shell ---------- */
 .wrap{max-width:1120px;margin:0 auto;padding:0 18px 64px}
@@ -54,8 +56,8 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
   backdrop-filter:saturate(1.6) blur(8px);border-bottom:1px solid var(--line);margin:0 -18px;padding:10px 18px}
 .days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .days::-webkit-scrollbar{display:none}
-.day{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:11px;
-  padding:8px 12px;text-align:left;line-height:1.3;transition:border-color .12s,background .12s}
+.day{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:16px;
+  padding:8px 14px;text-align:left;line-height:1.3;transition:all .15s}
 .day .d-n{display:block;font-size:11px;color:var(--muted);letter-spacing:.04em}
 .day .d-d{display:block;font-size:14px;font-weight:700;margin-top:1px}
 .day .d-a{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
@@ -63,12 +65,13 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .daybar.compact .d-n,.daybar.compact .d-a{display:none}
 .daybar.compact .day{padding:6px 13px;border-radius:9px}
 .daybar.compact .d-d{font-size:13.5px}
-.day[aria-selected="true"]{background:var(--dc,#123048);border-color:var(--dc,#123048);color:#fff}
+.day[aria-selected="true"]{background:var(--dc,#6B5B9A);border-color:var(--dc,#6B5B9A);color:#fff;
+  transform:translateY(-1px);box-shadow:0 4px 12px rgba(107,91,154,.22)}
 .day[aria-selected="true"] .d-n,.day[aria-selected="true"] .d-a{color:rgba(255,255,255,.78)}
 
 /* ---------- weather ---------- */
-.wx{display:flex;align-items:center;gap:8px;margin:12px 0 0;padding:8px 11px;
-  background:var(--surface);border-radius:11px;font-size:12.5px;color:var(--ink-2);
+.wx{display:flex;align-items:center;gap:8px;margin:12px 0 0;padding:9px 13px;
+  background:linear-gradient(120deg,#FDF4F8,#F3F1FB);border-radius:16px;font-size:12.5px;color:var(--ink-2);
   flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
 .wx .wx-t{font-size:16px;line-height:1;flex:0 0 auto}
 .wx .wx-b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
@@ -77,12 +80,12 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
   width:24px;height:24px;padding:0;font-size:12px;line-height:1;color:var(--muted)}
 
 /* ---------- view switch ---------- */
-.viewtabs{display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:12px;margin:16px 0 0}
+.viewtabs{display:flex;gap:4px;background:var(--surface);padding:5px;border-radius:18px;margin:16px 0 0}
 .viewtabs button{flex:1 1 0;min-width:0;border:0;background:none;padding:9px 2px;border-radius:9px;
-  font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em}
+  font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em;border-radius:14px}
 @media (max-width:400px){ .viewtabs button{font-size:12px} }
-.viewtabs button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(15,27,38,.1)}
+.viewtabs button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(107,91,154,.18)}
 
 .board{margin-top:18px;display:grid;gap:22px}
 
@@ -111,7 +114,7 @@ body.dragging-lock .tl li{touch-action:none}
 .tl li.dragging .item{background:var(--surface);border:1px dashed var(--muted)}
 .tl.dragmode li::before{opacity:.25}
 .formhost{margin:0 0 16px 30px}
-.eform{border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 16px;background:#fff}
+.eform{border:1.5px solid var(--line);border-radius:18px;padding:15px;margin:0 0 16px;background:#fff}
 .eform .fr{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin:0 0 9px}
 .eform .fr.one{grid-template-columns:1fr}
 .eform label{font-size:11.5px;color:var(--muted);display:block;margin:0 0 3px}
@@ -134,14 +137,14 @@ body.dragging-lock .tl li{touch-action:none}
 .tl li.seg-rail::before{background:repeating-linear-gradient(to bottom,var(--dc) 0 7px,transparent 7px 13px)}
 .tl li.seg-bus::before{background:repeating-linear-gradient(to bottom,var(--dc) 0 3px,transparent 3px 8px)}
 .tl li.seg-walk::before{background:var(--line)}
-.dot{position:absolute;left:0;top:7px;width:18px;height:18px;border-radius:50%;background:var(--dc);
+.dot{position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;background:var(--dc);box-shadow:0 2px 6px rgba(107,91,154,.2);
   color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center}
 .dot.info{background:#fff;border:2px solid var(--line);color:var(--muted)}
 .item{padding:3px 0 18px}
 .item .t{font-size:12.5px;color:var(--dc);font-weight:700;letter-spacing:.01em}
-.kind{display:inline-block;margin-left:7px;padding:2px 9px;border-radius:999px;font-size:11px;
+.kind{display:inline-block;margin-left:7px;padding:3px 10px;border-radius:999px;font-size:11px;
   font-weight:700;background:var(--dc);color:#fff;vertical-align:1px;letter-spacing:.02em}
-.flag{margin:8px 0 0;padding:9px 11px;background:#FFF6E8;border:1px solid #F0DDBE;border-radius:9px;
+.flag{margin:8px 0 0;padding:10px 12px;background:#FFF7EC;border:1.5px solid #F5E2C6;border-radius:14px;
   font-size:12.5px;color:#7A5A22;line-height:1.55}
 .flag::before{content:"확인 ";font-weight:700}
 .mchips{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 0}
@@ -151,7 +154,7 @@ body.dragging-lock .tl li{touch-action:none}
 .mchip.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .mchip.memo-chip{border-color:#CFE8DE;background:#F3FAF7;color:#1F5B4A}
 .mchip.memo-chip.on{background:#1E8A6E;border-color:#1E8A6E;color:#fff}
-.imemo{margin:8px 0 0;padding:10px 11px;background:var(--surface);border-radius:10px}
+.imemo{margin:8px 0 0;padding:11px 13px;background:var(--surface);border-radius:16px}
 .cmt{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line-soft)}
 .cmt:last-child{border-bottom:0}
 .cmt .av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--surface);
@@ -162,8 +165,8 @@ body.dragging-lock .tl li{touch-action:none}
 .cmt .ct{margin:2px 0 0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .cmt .cx{flex:0 0 auto;border:0;background:none;color:var(--line);font-size:12px;cursor:pointer;padding:3px}
 .cmt .cx:hover{color:#C2405F}
-.cmtbox{border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin:0 0 10px}
-.lgroup{margin:0 0 10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+.cmtbox{border:1.5px solid var(--line);border-radius:18px;padding:4px 15px;margin:0 0 10px;background:#fff}
+.lgroup{margin:0 0 10px;border:1.5px solid var(--line);border-radius:18px;padding:13px 15px;cursor:pointer;background:#fff}
 .lgroup:hover{border-color:var(--ink)}
 .lgroup h4{margin:0 0 6px;font-size:13px;font-weight:700}
 .lgroup .src{font-size:11.5px;color:var(--muted);margin:0 0 5px}
@@ -171,7 +174,7 @@ body.dragging-lock .tl li{touch-action:none}
   padding:1px 6px;margin-right:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em}
 .lgroup h4{margin:0 0 7px;font-size:14px}
 .sosgrid{display:grid;gap:9px;grid-template-columns:1fr 1fr}
-.sos{display:block;border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;background:#fff}
+.sos{display:block;border:1.5px solid var(--line);border-radius:18px;padding:15px;text-decoration:none;background:#fff}
 .sos b{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em}
 .sos span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .sos.urgent{border-color:#E8BCC4;background:#FFF5F7}
@@ -181,10 +184,10 @@ body.dragging-lock .tl li{touch-action:none}
 .mchip.warn.on{background:#7A5A22;border-color:#7A5A22;color:#fff}
 .hours{margin:6px 0 0;font-size:12.5px;color:var(--ink-2);font-weight:600}
 .hours::before{content:"영업시간 ";color:var(--muted);font-weight:400}
-.tip{margin:8px 0 0;padding:9px 11px;background:#F3FAF7;border:1px solid #CFE8DE;border-radius:9px;
+.tip{margin:8px 0 0;padding:10px 12px;background:#F1FAF5;border:1.5px solid #CFE8DE;border-radius:14px;
   font-size:12.5px;color:#1F5B4A;line-height:1.6}
 .tip::before{content:"꿀팁 ";font-weight:700}
-.daycand{margin:6px 0 0;padding:13px 14px;background:var(--surface);border-radius:12px}
+.daycand{margin:6px 0 0;padding:14px 15px;background:var(--surface);border-radius:18px}
 .daycand ul{list-style:none;margin:7px 0 0;padding:0;display:grid;gap:8px}
 .daycand li{font-size:13px;line-height:1.5}
 .daycand li b{font-weight:600}
@@ -194,7 +197,7 @@ body.dragging-lock .tl li{touch-action:none}
 .daycand li .nm{cursor:pointer;border-bottom:1px dashed var(--muted);padding-bottom:1px}
 .daycand li.near-sel{background:#fff;border-radius:8px;padding:5px 7px;margin:-5px -7px}
 .daycand li a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line);font-size:11.5px}
-.near{margin:9px 0 0;padding:9px 11px;background:var(--surface);border-radius:10px}
+.near{margin:9px 0 0;padding:10px 12px;background:var(--surface);border-radius:14px}
 .near>summary,.daycand>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px}
 .near>summary::-webkit-details-marker,.daycand>summary::-webkit-details-marker{display:none}
 .near>summary::after,.daycand>summary::after{content:"";width:6px;height:6px;margin-left:auto;
@@ -228,7 +231,7 @@ body.dragging-lock .tl li{touch-action:none}
 .gmap:hover{color:var(--ink);border-color:var(--ink)}
 
 /* 선택 상태 */
-.tl li .item{border-radius:11px;margin-left:-10px;padding-left:10px;padding-right:10px;
+.tl li .item{border-radius:16px;margin-left:-10px;padding-left:10px;padding-right:10px;
   transition:background .14s}
 .tl li.pickable .item{cursor:pointer}
 .tl li.pickable .item:hover{background:var(--surface)}
@@ -237,7 +240,7 @@ body.dragging-lock .tl li{touch-action:none}
 
 /* ---------- map ---------- */
 .mappanel{position:relative}
-#map{height:60vh;min-height:360px;border-radius:var(--radius);border:1px solid var(--line);z-index:1;
+#map{height:60vh;min-height:360px;border-radius:var(--radius);border:1.5px solid var(--line);z-index:1;
   background:#EEF2F5 repeating-linear-gradient(0deg,rgba(15,27,38,.045) 0 1px,transparent 1px 34px),
              repeating-linear-gradient(90deg,rgba(15,27,38,.045) 0 1px,transparent 1px 34px)}
 .maphint{display:none;margin:9px 0 0;padding:10px 12px;background:#FFF6E8;border:1px solid #F0DDBE;
@@ -277,7 +280,7 @@ body.dragging-lock .tl li{touch-action:none}
 .info h2{font-size:18px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
 .info .lead{margin:0 0 16px;color:var(--muted);font-size:13px}
 .cards{display:grid;gap:12px;grid-template-columns:1fr;margin:0 0 32px}
-.card{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff}
+.card{border:1.5px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff}
 .card>summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:10px}
 .card>summary::-webkit-details-marker{display:none}
 .card .ttl{font-weight:700;font-size:15px}
@@ -309,7 +312,7 @@ body.dragging-lock .tl li{touch-action:none}
 .prep-block .sub{margin:0 0 12px;font-size:12.5px;color:var(--muted)}
 .checks{display:grid;gap:8px;grid-template-columns:1fr}
 .chk{display:flex;gap:10px;align-items:center;width:100%;
-  border:1px solid var(--line);background:#fff;border-radius:11px;padding:11px 13px;font-size:14px;line-height:1.45}
+  border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.45}
 .chk .txt{flex:1;min-width:0}
 .chk .txt b{font-weight:600}
 .chk small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:2px}
@@ -333,7 +336,7 @@ body.dragging-lock .tl li{touch-action:none}
 .who{display:flex;gap:5px;flex:0 0 auto}
 .who button{border:1.5px solid var(--line);background:#fff;border-radius:999px;
   width:36px;height:36px;padding:0;font-size:17px;line-height:1;opacity:.35;filter:grayscale(1)}
-.who button[aria-pressed="true"]{background:#F3FAF7;border-color:#1E8A6E;opacity:1;filter:none}
+.who button[aria-pressed="true"]{background:#F1FAF5;border-color:#3BB98D;opacity:1;filter:none;transform:scale(1.06)}
 .who button.rm{border-style:dashed;color:#C2405F;width:32px;height:36px;font-size:13px;
   opacity:1;filter:none}
 .prog{font-size:12.5px;color:var(--muted);margin:0 0 12px}
@@ -363,7 +366,7 @@ body.dragging-lock .tl li{touch-action:none}
   transform:rotate(45deg);pointer-events:none}
 .filters select:focus-visible{outline:2px solid #2F6FB5;outline-offset:1px}
 .candlist{display:grid;gap:10px;grid-template-columns:1fr}
-.cand{border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.cand{border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;background:#fff}
 .cand h4{margin:0;font-size:15px;font-weight:700}
 .cand h4 small{font-weight:500;color:var(--muted);font-size:12px;margin-left:6px}
 .cand .when{margin:6px 0 0;font-size:12.5px;color:var(--ink-2)}
@@ -378,7 +381,7 @@ body.dragging-lock .tl li{touch-action:none}
   padding:5px 11px;font-size:12px}
 .candacts .gmap{margin-top:0}
 @media (min-width:900px){ .candlist{grid-template-columns:1fr 1fr} }
-.warn{border:1px solid var(--line);border-left:3px solid var(--wc,#C2405F);border-radius:11px;
+.warn{border:1.5px solid var(--line);border-left:4px solid var(--wc,#C2405F);border-radius:16px;
   overflow:hidden;background:#fff}
 .warn>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:10px;
   font-size:14.5px;font-weight:700}
@@ -676,7 +679,7 @@ const HOTEL = {lat:33.5878, lng:130.3945, q:"ホテルモントレ ラ・スー�
 
 const DAYS = [
  {
-  date:"2026-09-18", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.18", dow:"금", area:"도착 · 텐진", color:"#C2405F",
+  date:"2026-09-18", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.18", dow:"금", area:"도착 · 텐진", color:"#E27396",
   items:[
    {time:"14:25", name:"인천공항 제2터미널 출발", desc:"에어서울 RS727 · 비행 1시간 35분", type:"info"},
    {time:"16:00", name:"후쿠오카공항 국제선", ja:"福岡空港 国際線ターミナル", desc:"입국 심사 후 국내선 터미널로 무료 셔틀 이동, 지하철 공항선 탑승", lat:33.5930, lng:130.4350, mode:"start"},
@@ -699,7 +702,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-19", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.19", dow:"토", area:"하카타 · 텐진 · 나카스", color:"#2F6FB5",
+  date:"2026-09-19", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.19", dow:"토", area:"하카타 · 텐진 · 나카스", color:"#6FA8DC",
   items:[
    {kind:"아침", time:"09:00", name:"우동 · 호텔 주변", ja:"うどん 天神", desc:"다이묘·텐진 쪽 우동집으로. 마키노우동, 우동타이라 같은 곳이 아침부터 열어요", lat:33.5883, lng:130.3955, mode:"start"},
    {time:"09:40", name:"호텔 출발", ja:"ホテルモントレ ラ・スール福岡", desc:"오늘은 후쿠오카 시내만 통째로", lat:HOTEL.lat, lng:HOTEL.lng, mode:"walk", how:"도보 5분"},
@@ -725,7 +728,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-20", pref:"400000", wxArea:"北九州", wxTemp:"八幡", wxName:"기타큐슈", label:"9.20", dow:"일", area:"고쿠라 · 모지코", color:"#1E8A6E",
+  date:"2026-09-20", pref:"400000", wxArea:"北九州", wxTemp:"八幡", wxName:"기타큐슈", label:"9.20", dow:"일", area:"고쿠라 · 모지코", color:"#5BC4A0",
   items:[
    {kind:"아침", time:"08:00", name:"아침은 편의점 또는 하카타역", desc:"오니기리 고리짱은 11시에 열어서 이날 아침에는 못 가요. 9.22 점심 후보로 옮겨두는 편이 나아요", type:"info",
     flag:"고리짱 텐진점은 11:00~20:00에 수요일 휴무이고, 쌀이 떨어지면 일찍 닫아요. 주말에는 더 일찍 연다는 안내도 있지만 09:15 신칸센과는 맞지 않습니다."},
@@ -755,7 +758,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-21", pref:"440000", wxArea:"中部", wxTemp:"大分", wxName:"유후인·벳푸", label:"9.21", dow:"월", area:"유후인 · 사파리 · 지옥", color:"#C06A16",
+  date:"2026-09-21", pref:"440000", wxArea:"中部", wxTemp:"大分", wxName:"유후인·벳푸", label:"9.21", dow:"월", area:"유후인 · 사파리 · 지옥", color:"#EDA65B",
   items:[
    {time:"06:30", name:"기상 · 준비", desc:"집결시간이 이르니 알람 필수", type:"info"},
    {kind:"아침", time:"07:00", name:"편의점 아침", desc:"호텔 근처 편의점에서 사서 버스에서", type:"info"},
@@ -776,7 +779,7 @@ const DAYS = [
   ]
  },
  {
-  date:"2026-09-22", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.22", dow:"화", area:"체크아웃 · 귀국", color:"#6A55C4",
+  date:"2026-09-22", pref:"400000", wxArea:"福岡", wxTemp:"福岡", wxName:"후쿠오카", label:"9.22", dow:"화", area:"체크아웃 · 귀국", color:"#9B8BD8",
   items:[
    {kind:"아침", time:"09:00", name:"편의점 아침", desc:"짐 정리하면서 간단히", type:"info"},
    {time:"11:00", name:"체크아웃 · 짐 보관", ja:"ホテルモントレ ラ・スール福岡", desc:"호텔에 짐 맡기고 가볍게 이동", lat:HOTEL.lat, lng:HOTEL.lng, mode:"start"},
@@ -2370,6 +2373,20 @@ async function loadWeather(){
     const json = await jmaFetch(day.pref);
     const f = jmaPick(json, day);
     if (!f.code) throw new Error("no data");
+
+    // 오늘 후쿠오카 실황에 가까운 단기예보도 함께
+    let todayTxt = "";
+    const todayStr = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    if (todayStr !== day.date){
+      try{
+        const tj = await jmaFetch("400000");
+        const t = jmaPick(tj, {date:todayStr, wxArea:"福岡", wxTemp:"福岡"});
+        if (t.code){
+          const [tt, te] = telop(t.code);
+          todayTxt = ` · 오늘 ${te} ${tt}${t.tmax ? " " + t.tmax + "°" : ""}`;
+        }
+      }catch(e){}
+    }
     const [txt, emo] = telop(f.code);
     const t = (f.tmax && f.tmin) ? ` ${f.tmax}° / ${f.tmin}°` : (f.tmax ? ` ${f.tmax}°` : "");
     const pop = f.pop !== "" && f.pop != null ? ` · 비 ${f.pop}%` : "";
@@ -2377,7 +2394,7 @@ async function loadWeather(){
     const where = koArea(f.area || day.wxName);
     const wide = f.wide ? " 전역" : "";
     wx.innerHTML = `<span class="wx-t">${emo}</span>
-      <span class="wx-b"><b>${where}${wide} ${txt}</b>${t}${pop}${rel}</span>
+      <span class="wx-b"><b>${day.label} 예보</b> ${where}${wide} ${txt}${t}${pop}${rel}${todayTxt}</span>
       <button class="retry" type="button" aria-label="날씨 새로고침">↻</button>`;
     wx.title = `기상청 ${f.issued ? f.issued.slice(0, 16).replace("T", " ") : ""} 발표`
       + (f.tempArea ? ` · 기온 관측지 ${koArea(f.tempArea)}` : "");
