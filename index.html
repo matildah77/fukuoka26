@@ -916,6 +916,7 @@ let pickIdx = -1;          // 선택된 장소 (그날 장소 목록 기준)
 let markers = [];          // 지도 마커
 let nearList = [];         // 근처 추천 (지도 표시용)
 let nearMarker = null;
+let pendingFocus = null;
 let places = [];           // 지도에 찍히는 장소만
 const modeOn = {walk:true, rail:true, bus:true};
 const routeCache = new Map();
@@ -938,7 +939,7 @@ function dayDirectionsUrl(day){
 
 
 /* ============ 새 버전 자동 반영 ============ */
-const BUILD = "20260917015719";
+const BUILD = "20260917015800";
 (function checkUpdate(){
   const ping = () => fetch("version.txt?t=" + Date.now(), {cache:"no-store"})
     .then(r => r.ok ? r.text() : null)
@@ -1668,7 +1669,11 @@ function pickPlace(i, from){
 
   const p = places[i];
   if (!p || !map) return;
-  if (mapPanel.classList.contains("folded")) setMapOpen(true, true);
+  if (mapPanel.classList.contains("folded")){
+    pendingFocus = {kind:"place", i};   // 지도를 펼칠 때 보여줄 위치만 기억
+    mapToggle.textContent = "지도에서 보기";
+    return;
+  }
 
   map.invalidateSize();
   map.setView([p.lat, p.lng], Math.max(map.getZoom(), 14), {animate:true});
@@ -1688,7 +1693,11 @@ function showNear(i){
   document.querySelectorAll("li[data-ni]").forEach(li =>
     li.classList.toggle("near-sel", Number(li.dataset.ni) === i));
 
-  if (mapPanel.classList.contains("folded")) setMapOpen(true, true);
+  if (mapPanel.classList.contains("folded")){
+    pendingFocus = {kind:"near", i};
+    mapToggle.textContent = "지도에서 보기";
+    return;
+  }
   if (nearMarker) map.removeLayer(nearMarker);
   nearMarker = L.marker([x.lat, x.lng], {
     icon: L.divIcon({className:"",
@@ -2437,9 +2446,17 @@ const MKEY = "fuk26.mapOpen";
 
 function setMapOpen(open, save){
   mapPanel.classList.toggle("folded", !open);
-  mapToggle.textContent = open ? "지도 접기" : "지도 펼치기";
+  mapToggle.textContent = open ? "지도 접기" : (pendingFocus ? "지도에서 보기" : "지도 펼치기");
   mapToggle.setAttribute("aria-expanded", String(open));
-  if (open && map) setTimeout(() => map.invalidateSize(), 60);
+  if (open && map) setTimeout(() => {
+    map.invalidateSize();
+    if (pendingFocus){
+      const f = pendingFocus;
+      pendingFocus = null;
+      if (f.kind === "place") pickPlace(f.i, "list");
+      else showNear(f.i);
+    }
+  }, 60);
   if (save){ try{ localStorage.setItem(MKEY, open ? "1" : "0"); }catch(e){} }
 }
 mapToggle.addEventListener("click", () =>
