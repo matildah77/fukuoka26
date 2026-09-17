@@ -151,13 +151,17 @@ body.dragging-lock .tl li{touch-action:none}
 .mchip.memo-chip{border-color:#CFE8DE;background:#F3FAF7;color:#1F5B4A}
 .mchip.memo-chip.on{background:#1E8A6E;border-color:#1E8A6E;color:#fff}
 .imemo{margin:8px 0 0;padding:10px 11px;background:var(--surface);border-radius:10px}
-.bmemo{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 9px;
-  display:flex;gap:10px;align-items:flex-start}
-.bmemo .av{font-size:19px;line-height:1.2;flex:0 0 auto}
-.bmemo .bd{flex:1;min-width:0}
-.bmemo .bd p{margin:0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-.bmemo .bd time{display:block;font-size:11px;color:var(--muted);margin-top:4px}
-.bmemo .bx{border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer;padding:2px 0 0}
+.cmt{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.cmt:last-child{border-bottom:0}
+.cmt .av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--surface);
+  display:grid;place-items:center;font-size:16px;line-height:1}
+.cmt .cb{flex:1;min-width:0}
+.cmt .ch{margin:0;font-size:12px;color:var(--muted);font-weight:600}
+.cmt .ch b{color:var(--ink);font-weight:700;margin-right:6px}
+.cmt .ct{margin:2px 0 0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.cmt .cx{flex:0 0 auto;border:0;background:none;color:var(--line);font-size:12px;cursor:pointer;padding:3px}
+.cmt .cx:hover{color:#C2405F}
+.cmtbox{border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin:0 0 10px}
 .lgroup{margin:0 0 10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
 .lgroup:hover{border-color:var(--ink)}
 .lgroup h4{margin:0 0 6px;font-size:13px;font-weight:700}
@@ -1469,10 +1473,13 @@ function renderDayCand(){
 function drawItemMemo(panel, day, it){
   const key = memoKey(day, it);
   const list = itemMemos[key] || [];
-  panel.innerHTML = `${list.length ? `<div class="memos">${list.map((m, mi) => {
+  panel.innerHTML = `${list.length ? list.map((m, mi) => {
       const who = PEOPLE.find(p => p.k === m.w);
-      return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t}<button type="button" class="mdel" data-mi="${mi}">✕</button></span>`;
-    }).join("")}</div>` : `<p style="margin:0 0 6px;font-size:12px;color:var(--muted)">아직 메모가 없어요</p>`}
+      return `<div class="cmt"><span class="av">${who ? who.e : "·"}</span>
+        <span class="cb"><p class="ch"><b>${who ? who.n : "메모"}</b>${m.at ? fmtTime(m.at) : ""}</p>
+        <p class="ct">${m.t.replace(/</g, "&lt;")}</p></span>
+        <button type="button" class="mdel cx" data-mi="${mi}" aria-label="삭제">✕</button></div>`;
+    }).join("") : `<p style="margin:0 0 6px;font-size:12px;color:var(--muted)">아직 메모가 없어요</p>`}
     <span class="memoform">
       ${PEOPLE.map((p, k) => `<button type="button" class="mw${k === 0 ? " on" : ""}" data-w="${p.k}">${p.e}</button>`).join("")}
       <input class="mi" placeholder="한두 줄 메모">
@@ -1488,7 +1495,7 @@ function drawItemMemo(panel, day, it){
   const save = () => {
     const t = inp.value.trim();
     if (!t) return;
-    itemMemos[key] = [...(itemMemos[key] || []), {w:who, t}];
+    itemMemos[key] = [...(itemMemos[key] || []), {w:who, t, at:Date.now()}];
     saveItemMemos();
     drawItemMemo(panel, day, it);
     const chip = panel.parentElement.querySelector(".memo-chip");
@@ -2068,12 +2075,13 @@ function renderBoard(){
   if (!boardMemos.length){
     list.innerHTML = `<p class="emptyline">아직 메모가 없어요.</p>`;
   } else {
-    list.innerHTML = boardMemos.map((m, i) => {
+    list.innerHTML = `<div class="cmtbox">${boardMemos.map((m, i) => {
       const who = PEOPLE.find(p => p.k === m.w);
-      return `<div class="bmemo"><span class="av">${who ? who.e : "·"}</span>
-        <span class="bd"><p>${m.t.replace(/</g, "&lt;")}</p><time>${fmtTime(m.at)}</time></span>
-        <button type="button" class="bx" data-i="${i}" aria-label="삭제">✕</button></div>`;
-    }).join("");
+      return `<div class="cmt"><span class="av">${who ? who.e : "·"}</span>
+        <span class="cb"><p class="ch"><b>${who ? who.n : "메모"}</b>${fmtTime(m.at)}</p>
+        <p class="ct">${m.t.replace(/</g, "&lt;")}</p></span>
+        <button type="button" class="bx cx" data-i="${i}" aria-label="삭제">✕</button></div>`;
+    }).join("")}</div>`;
     list.querySelectorAll(".bx").forEach(b => b.addEventListener("click", () => {
       if (!confirm("이 메모를 지울까요?")) return;
       boardMemos.splice(Number(b.dataset.i), 1);
@@ -2102,7 +2110,9 @@ function renderBoard(){
       <h4>${r.title}</h4>
       ${r.arr.map(m => {
         const who = PEOPLE.find(p => p.k === m.w);
-        return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t.replace(/</g, "&lt;")}</span>`;
+        return `<div class="cmt"><span class="av">${who ? who.e : "·"}</span>
+          <span class="cb"><p class="ch"><b>${who ? who.n : "메모"}</b>${m.at ? fmtTime(m.at) : ""}</p>
+          <p class="ct">${m.t.replace(/</g, "&lt;")}</p></span></div>`;
       }).join("")}
     </div>`).join("") : `<p class="emptyline">일정에 남긴 메모가 아직 없어요.</p>`;
 
