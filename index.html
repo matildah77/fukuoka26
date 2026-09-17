@@ -841,7 +841,9 @@ let db = null, syncing = false, applying = false;
   Storage.prototype.setItem = function(k, v){
     origSet.call(this, k, v);
     if (!applying && syncing && SYNC_KEYS.includes(k)){
-      db.ref("state/" + k.replace(/\./g, "_")).set(v).catch(() => {});
+      db.ref("state/" + k.replace(/\./g, "_")).set(v)
+        .then(() => setSyncBadge(true))
+        .catch(() => setSyncBadge(false));
     }
   };
   const origDel = Storage.prototype.removeItem;
@@ -852,7 +854,7 @@ let db = null, syncing = false, applying = false;
     }
   };
 
-  // 서버 변경을 화면에 반영
+  // 서버 변경을 화면에 반영 (서버에 없다고 로컬을 지우지는 않아요)
   db.ref("state").on("value", snap => {
     const v = snap.val() || {};
     let touched = false;
@@ -864,17 +866,15 @@ let db = null, syncing = false, applying = false;
       if (remote != null && remote !== local){
         origSet.call(localStorage, k, remote);
         touched = true;
-      } else if (remote == null && local != null && v.__init){
-        origDel.call(localStorage, k);
-        touched = true;
+      } else if (remote == null && local != null){
+        // 아직 서버에 없는 내 기록은 올려둔다
+        db.ref("state/" + rk).set(local).catch(() => {});
       }
     });
     applying = false;
     if (touched) applyRemote();
     setSyncBadge(true);
   }, () => setSyncBadge(false));
-
-  db.ref("state/__init").set(true).catch(() => {});
 })();
 
 function applyRemote(){
@@ -2131,6 +2131,7 @@ function renderBoard(){
     saveBoard();
     inp.value = "";
     renderBoard();
+    inp.focus();
   };
   document.getElementById("boardSave").addEventListener("click", add);
   inp.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
