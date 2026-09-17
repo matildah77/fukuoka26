@@ -939,7 +939,7 @@ function dayDirectionsUrl(day){
 
 
 /* ============ 새 버전 자동 반영 ============ */
-const BUILD = "20260917015800";
+const BUILD = "20260917015907";
 (function checkUpdate(){
   const ping = () => fetch("version.txt?t=" + Date.now(), {cache:"no-store"})
     .then(r => r.ok ? r.text() : null)
@@ -2433,6 +2433,9 @@ function setView(v){
   panelMap.hidden = !trip;
   panelPrep.hidden = v !== "prep";
   panelCand.hidden = v !== "cand";
+  panelMemo.hidden = v !== "memo";
+  panelTalk.hidden = v !== "talk";
+  if (v === "memo" && typeof renderBoard === "function") renderBoard();
   if (trip && map){ setStick(); setTimeout(() => map.invalidateSize(), 60); }
 }
 tabTrip.addEventListener("click", () => setView("trip"));
