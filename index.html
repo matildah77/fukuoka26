@@ -162,6 +162,9 @@ body.dragging-lock .tl li{touch-action:none}
 .lgroup:hover{border-color:var(--ink)}
 .lgroup h4{margin:0 0 6px;font-size:13px;font-weight:700}
 .lgroup .src{font-size:11.5px;color:var(--muted);margin:0 0 5px}
+.lgroup .src i{font-style:normal;background:var(--navy);color:#fff;border-radius:5px;
+  padding:1px 6px;margin-right:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+.lgroup h4{margin:0 0 7px;font-size:14px}
 .sosgrid{display:grid;gap:9px;grid-template-columns:1fr 1fr}
 .sos{display:block;border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;background:#fff}
 .sos b{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em}
@@ -484,7 +487,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
     </div>
     <div id="boardList"></div>
     <h2 style="margin-top:30px">일정에 남긴 메모</h2>
-    <p class="lead">각 일정 항목에서 남긴 메모를 한곳에 모았어요. 누르면 그 날짜로 이동합니다.</p>
+    <p class="lead">어느 일정에서 적었는지 함께 보여줘요. 카드를 누르면 그 날짜로 이동합니다.</p>
     <div id="linkedMemos"></div>
   </section>
 
@@ -2084,11 +2087,19 @@ function renderBoard(){
     .map(([k, arr]) => {
       const [date, name] = k.split("::");
       const di = DAYS.findIndex(d => d.date === date);
-      return {title:name, label: di >= 0 ? DAYS[di].label : date, di, arr};
+      const d = di >= 0 ? DAYS[di] : null;
+      const it = d ? d.items.find(x => x.name === name) : null;
+      return {
+        title:name, di, arr,
+        label: d ? `${d.label} (${d.dow})` : date,
+        time: it && it.time && it.time !== "—" ? it.time : "",
+        area: d ? d.area : ""
+      };
     });
 
   box.innerHTML = rows.length ? rows.map(r => `<div class="lgroup" data-di="${r.di}">
-      <p class="src">${r.label}</p><h4>${r.title}</h4>
+      <p class="src"><i>일정</i> ${r.label}${r.time ? " · " + r.time : ""}${r.area ? " · " + r.area : ""}</p>
+      <h4>${r.title}</h4>
       ${r.arr.map(m => {
         const who = PEOPLE.find(p => p.k === m.w);
         return `<span class="memo"><i>${who ? who.e : "·"}</i>${m.t.replace(/</g, "&lt;")}</span>`;
