@@ -165,6 +165,20 @@ body.dragging-lock .tl li{touch-action:none}
 .cmt .ct{margin:2px 0 0;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .cmt .cx{flex:0 0 auto;border:0;background:none;color:var(--line);font-size:12px;cursor:pointer;padding:3px}
 .cmt .cx:hover{color:#C2405F}
+.composer{border:1.5px solid var(--line);border-radius:20px;padding:14px;margin:0 0 20px;
+  background:#fff;box-shadow:0 2px 10px rgba(107,91,154,.06)}
+.cwho{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px}
+.cwho .clabel{font-size:11.5px;color:var(--muted);margin-right:2px}
+.cw{border:1.5px solid var(--line);background:#fff;border-radius:999px;
+  padding:7px 14px;font-size:13px;font-weight:600;color:var(--muted)}
+.cw.on{background:#F1FAF5;border-color:#3BB98D;color:#1F5B4A}
+.composer textarea{width:100%;border:1.5px solid var(--line);border-radius:14px;
+  padding:11px 13px;font-size:14px;font-family:inherit;line-height:1.5;resize:vertical;
+  background:var(--surface);color:var(--ink)}
+.composer textarea:focus{background:#fff;outline:2px solid #C9B6E8;outline-offset:-1px}
+.csave{width:100%;margin-top:10px;border:0;border-radius:14px;padding:12px 0;
+  background:linear-gradient(135deg,#7C6BB0,#A98BC7);color:#fff;font-size:14px;font-weight:700}
+.csave:active{opacity:.85}
 .cmtbox{border:1.5px solid var(--line);border-radius:18px;padding:4px 15px;margin:0 0 10px;background:#fff}
 .lgroup{margin:0 0 10px;border:1.5px solid var(--line);border-radius:18px;padding:13px 15px;cursor:pointer;background:#fff}
 .lgroup:hover{border-color:var(--ink)}
@@ -484,13 +498,14 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
   <section class="info" id="panel-memo" role="tabpanel" aria-labelledby="tab-memo" hidden>
     <h2>메모</h2>
     <p class="lead">둘이 함께 쓰는 메모장이에요. 아래에는 일정에 남긴 메모가 모입니다.</p>
-    <div class="eform" style="margin-bottom:22px">
-      <div class="memoform" style="margin:0">
-        <button type="button" class="mw on" data-w="woo">🐯</button>
-        <button type="button" class="mw" data-w="ye">🐰</button>
-        <input class="mi" id="boardInput" placeholder="메모를 적어주세요">
-        <button type="button" class="ms" id="boardSave">저장</button>
+    <div class="composer">
+      <div class="cwho">
+        <span class="clabel">누가 쓰나요</span>
+        <button type="button" class="cw on" data-w="woo">🐯 우영</button>
+        <button type="button" class="cw" data-w="ye">🐰 예슬</button>
       </div>
+      <textarea id="boardInput" rows="2" placeholder="메모를 적어주세요"></textarea>
+      <button type="button" id="boardSave" class="csave">메모 남기기</button>
     </div>
     <div id="boardList"></div>
     <h2 style="margin-top:30px">일정에 남긴 메모</h2>
@@ -2142,11 +2157,12 @@ function renderBoard(){
 })();
 
 (function initBoard(){
-  const wrap = document.querySelector("#panel-memo .memoform");
+  const wrap = document.querySelector("#panel-memo .cwho");
+  if (!wrap) return;
   let who = "woo";
-  wrap.querySelectorAll(".mw").forEach(b => b.addEventListener("click", () => {
+  wrap.querySelectorAll(".cw").forEach(b => b.addEventListener("click", () => {
     who = b.dataset.w;
-    wrap.querySelectorAll(".mw").forEach(x => x.classList.toggle("on", x === b));
+    wrap.querySelectorAll(".cw").forEach(x => x.classList.toggle("on", x === b));
   }));
   const inp = document.getElementById("boardInput");
   const add = () => {
@@ -2159,7 +2175,7 @@ function renderBoard(){
     inp.focus();
   };
   document.getElementById("boardSave").addEventListener("click", add);
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) add(); });
 })();
 
 /* ============ 보기 전환 ============ */
