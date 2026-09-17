@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>후쿠오카 여행 동선 지도 · 2026.09.18–22</title>
+<title>후쿠오카 여행 냐홍~ · 2026.09.18–22</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
@@ -39,9 +39,10 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .hero h1{margin:0;font-size:27px;line-height:1.25;font-weight:800;letter-spacing:-.02em}
 .hero .sub{margin:8px 0 0;color:#C3D6E4;font-size:13.5px}
 .hero .sub b{color:#fff;font-weight:600}
-.syncbadge{display:inline-block;margin:14px 0 0 7px;padding:5px 11px;border-radius:999px;
-  font-size:11.5px;border:1px solid rgba(255,255,255,.22);color:#C3D6E4}
-.syncbadge.on{border-color:rgba(120,220,180,.45);color:#9FE7C8}
+.syncbadge{display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:#8296A6;margin:0 0 1px 8px;vertical-align:middle;
+  box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+.syncbadge.on{background:#5BD7A4;box-shadow:0 0 0 3px rgba(91,215,164,.22)}
 .dday{display:inline-block;margin-top:14px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
   padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:600}
 
@@ -418,11 +419,10 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-si
 
 <header class="hero">
   <div class="hero-in">
-    <p class="route-line">FUKUOKA · KOKURA · MOJIKO · YUFUIN · BEPPU</p>
-    <h1>후쿠오카 여행 동선 지도</h1>
+    <h1>후쿠오카 여행 냐홍~</h1>
     <p class="sub">2026.09.18 (금) – 09.22 (화) · 4박 5일 · 2인<br>숙소 <b>호텔 몬토레 라 스루 후쿠오카</b></p>
     <div class="dday" id="dday">출발까지</div>
-    <span class="syncbadge" id="syncBadge">연결 중…</span>
+    <span class="syncbadge" id="syncBadge" role="status" aria-label="동기화 상태" title="연결 중…"></span>
   </div>
 </header>
 
@@ -914,8 +914,9 @@ function applyRemote(){
 function setSyncBadge(ok){
   const el = document.getElementById("syncBadge");
   if (!el) return;
-  el.textContent = ok ? "동기화 중" : "연결 안 됨";
   el.className = "syncbadge" + (ok ? " on" : "");
+  el.title = ok ? "동기화 중 · 둘이 함께 보고 있어요" : "연결 안 됨 · 이 기기에만 저장돼요";
+  el.setAttribute("aria-label", el.title);
 }
 
 /* ============ D-day ============ */
