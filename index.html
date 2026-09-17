@@ -2263,11 +2263,20 @@ async function jmaFetch(pref){
 const pickArea = (areas, key) =>
   areas.find(a => a.area && a.area.name.includes(key)) || areas[0];
 
+const AREA_KO = {
+  "福岡県":"후쿠오카현", "福岡地方":"후쿠오카", "北九州地方":"기타큐슈",
+  "筑豊地方":"지쿠호", "筑後地方":"지쿠고",
+  "大分県":"오이타현", "中部":"오이타 중부", "北部":"오이타 북부",
+  "西部":"오이타 서부", "南部":"오이타 남부",
+  "福岡":"후쿠오카", "八幡":"야하타", "飯塚":"이즈카", "久留米":"구루메", "大分":"오이타"
+};
+const koArea = n => AREA_KO[n] || n;
+
 function jmaPick(json, day){
   const want = day.date;
   const out = {};
 
-  // 주간예보(두 번째 블록)
+  // 주간예보 — 현 단위로만 나와요
   const wk = json[1];
   if (wk && wk.timeSeries){
     const ws = wk.timeSeries[0];
@@ -2277,6 +2286,8 @@ function jmaPick(json, day){
       out.code = a.weatherCodes[wi];
       out.pop = a.pops ? a.pops[wi] : "";
       out.rel = a.reliabilities ? a.reliabilities[wi] : "";
+      out.area = a.area.name;
+      out.wide = true;
     }
     const ts = wk.timeSeries[1];
     if (ts){
@@ -2285,11 +2296,12 @@ function jmaPick(json, day){
         const a = pickArea(ts.areas, day.wxTemp);
         out.tmax = a.tempsMax ? a.tempsMax[ti] : "";
         out.tmin = a.tempsMin ? a.tempsMin[ti] : "";
+        out.tempArea = a.area.name;
       }
     }
   }
 
-  // 단기예보(첫 블록)가 그 날짜를 덮으면 더 정확하므로 우선
+  // 단기예보 — 지방 단위라 더 정확. 있으면 이걸 우선
   const st = json[0];
   if (st && st.timeSeries){
     const ss = st.timeSeries[0];
@@ -2297,7 +2309,11 @@ function jmaPick(json, day){
     if (si >= 0){
       const a = pickArea(ss.areas, day.wxArea);
       out.code = a.weatherCodes[si];
+      out.text = a.weathers ? a.weathers[si] : "";
+      out.area = a.area.name;
+      out.wide = false;
       out.rel = "";
+
       const ps = st.timeSeries[1];
       if (ps){
         const pa = pickArea(ps.areas, day.wxArea);
@@ -2306,8 +2322,20 @@ function jmaPick(json, day){
           .filter(v => v !== null && !isNaN(v));
         if (vals.length) out.pop = String(Math.max(...vals));
       }
+      const tsx = st.timeSeries[2];
+      if (tsx){
+        const ta = pickArea(tsx.areas, day.wxTemp);
+        const hit = tsx.timeDefines
+          .map((t, k) => t.slice(0, 10) === want ? Number(ta.temps[k]) : null)
+          .filter(v => v !== null && !isNaN(v));
+        if (hit.length >= 2){ out.tmin = String(Math.min(...hit)); out.tmax = String(Math.max(...hit)); }
+        else if (hit.length === 1){ out.tmax = String(hit[0]); }
+        out.tempArea = ta.area.name;
+      }
     }
   }
+
+  out.issued = (json[0] && json[0].reportDatetime) || "";
   return out;
 }
 
@@ -2320,12 +2348,16 @@ async function loadWeather(){
     const f = jmaPick(json, day);
     if (!f.code) throw new Error("no data");
     const [txt, emo] = telop(f.code);
-    const t = (f.tmax && f.tmin) ? ` ${f.tmax}° / ${f.tmin}°` : "";
+    const t = (f.tmax && f.tmin) ? ` ${f.tmax}° / ${f.tmin}°` : (f.tmax ? ` ${f.tmax}°` : "");
     const pop = f.pop !== "" && f.pop != null ? ` · 비 ${f.pop}%` : "";
     const rel = f.rel ? ` · 신뢰도 ${f.rel}` : "";
+    const where = koArea(f.area || day.wxName);
+    const wide = f.wide ? " 전역" : "";
     wx.innerHTML = `<span class="wx-t">${emo}</span>
-      <span class="wx-b"><b>${day.wxName} ${txt}</b>${t}${pop}${rel}</span>
+      <span class="wx-b"><b>${where}${wide} ${txt}</b>${t}${pop}${rel}</span>
       <button class="retry" type="button" aria-label="날씨 새로고침">↻</button>`;
+    wx.title = `기상청 ${f.issued ? f.issued.slice(0, 16).replace("T", " ") : ""} 발표`
+      + (f.tempArea ? ` · 기온 관측지 ${koArea(f.tempArea)}` : "");
   }catch(e){
     wx.innerHTML = `<span class="wx-t">🌐</span>
       <span class="wx-b">날씨를 불러오지 못했어요</span>
